@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 // comparison? 
 static int compare_int(const void *a, const void *b)
@@ -40,7 +41,7 @@ static void merge(int *a, int numel_a, int *b, int numel_b)
 		else {
 			sorted[i] = b[b_i];
 			b_i++;
-		}
+		}}
 	else { 
 		if(a_i < numel_a) {
 		sorted[i] = a[a_i];
@@ -48,10 +49,15 @@ static void merge(int *a, int numel_a, int *b, int numel_b)
  else {
 	sorted[i] = b[b_i];
 	b_i++;
-	}
 }
 }
 }
+<<<<<<< HEAD
 }
 
+=======
+>>>>>>> d4d3f7fb05ca0d2f3b8929fb88ca380401eee301
 
+memcpy(a, sorted, (numel_a + numel_b) * sizeof *sorted);
+free(sorted);
+}
