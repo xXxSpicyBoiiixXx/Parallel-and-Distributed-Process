@@ -1,4 +1,4 @@
-# For C programs 
+# For MPI programs 
 CC = mpicc
 
 # flags
@@ -16,4 +16,5 @@ exercise1.o: exercise1.c
 clean: 
 	$(RM) 1 *.o *.~
 
-run: ./1 
+run: 
+	mpiexec -n 2 ./1

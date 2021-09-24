@@ -51,6 +51,7 @@ static void merge(int *a, int numel_a, int *b, int numel_b)
 	}
 }
 }
-}}
+}
+}
 
 
