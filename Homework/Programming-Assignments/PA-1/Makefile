@@ -4,13 +4,13 @@ CC = mpicc
 # flags
 CFLAGS = -g -Wall -Wextra -Werror
 
-all: exercise1
+all: 1
 
-exercise1: exercise1.o
-	$(CC) $(CFLAGS) -o 1 exercise1.o
+1: 1.o
+	$(CC) $(CFLAGS) -o 1 1.o
 
-exercise1.o: exercise1.c
-	$(CC) $(CFLAGS) -c exercise1.c
+1.o: 1.c
+	$(CC) $(CFLAGS) -c 1.c
 
 
 clean: 

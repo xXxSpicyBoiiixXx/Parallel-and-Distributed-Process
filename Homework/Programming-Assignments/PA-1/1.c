@@ -18,24 +18,32 @@
 #include <math.h>
 #include <string.h>
 #include <time.h>
-
+ 
 #define NUM_ELEMENTS 10
 
-static void print_array(int * arr, size_t len) { 
+
+// Will be keeping both either ints or unsigned ints. 
+static void print_array(int * arr, int len) { 
 	for(int i = 0; i < len; i++)
-		printf("%d", arr[i]); 
+		printf("%d ", arr[i]);
 	printf("\n");	
 }
 
-// comparison? 
+static inline void init_array(int * a, int len) {
+	for(int i = 0; i < len; i++) 
+		a[i] = rand() % NUM_ELEMENTS;
+}
+
+static inline void usage(char * prog) { 
+	printf("Usage: %s -n [number of processes]", prog); 
+}
+
+// comparison <--- fix for n ranks.  
 static int compare_int(const void *a, const void *b)
 {
 	return (*(int *) a - *(int *) b); 
 }
 
-// unfinised looking thorugh code at the momnet
-// is merge sort the way to go?
-// how to make this represetnated for multiple threads????  
 static void merge(int *a, int numel_a, int *b, int numel_b)
 {
 	int *sorted = (int *) malloc((numel_a + numel_b) * sizeof *a);
@@ -74,11 +82,21 @@ int main(int argc, char **argv)
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
 	MPI_Comm_size(MPI_COMM_WORLD, &size); 
 
+// Not sure what to do wit these yet..... we shall see!
+//	size_t len; 	
+//	len = atoll(argv[1]);
+
+	if(argc < 1) { 
+		usage(argv[0]);
+		MPI_Finalize(); 
+		exit(EXIT_SUCCESS); 	
+	}
+	/*	
 	if(size != 2) { 
 		printf("Please run with exactly 2 rankss\n"); 
 		MPI_Finalize(); 
 		exit(0); 
-	} 
+	} */
 
 	int first_half = floor((double) NUM_ELEMENTS / 2); 
 	int second_half = NUM_ELEMENTS - first_half; 
@@ -86,11 +104,12 @@ int main(int argc, char **argv)
 	srand(0); 
 
 	if(rank == 0) {
-		int i; 
-		printf("Unsorted:\t");
-		
-		print_array(data, NUM_ELEMENTS); 
-	
+
+	// intializing and printing
+	printf("Unsorted:\t"); 
+	init_array(data, NUM_ELEMENTS);
+	print_array(data, NUM_ELEMENTS);
+ 	
 	// sends data to the other rank
 	MPI_Send(&data[first_half], second_half, MPI_INT, 1, 0, MPI_COMM_WORLD); 
 	
@@ -102,13 +121,11 @@ int main(int argc, char **argv)
 
 	// merging the two sorted arrays
 	merge(data, first_half, &data[first_half], second_half);
-
-	printf("Sorted:\t\t"); 
 	
-	for(i = 0; i < NUM_ELEMENTS; i++)
-		printf("%d ", data[i]);
-	printf("\n"); 
-
+	// printing sorted array
+	printf("Sorted:\t\t"); 
+	print_array(data, NUM_ELEMENTS);	
+	
 	} else if (rank == 1) {
 		
 	// receives half of the data 
