@@ -1,20 +1,14 @@
 # For MPI programs 
 CC = mpicc
-
+OBJ = 1
 # flags
-CFLAGS = -g -Wall -Wextra -Werror
+CFLAGS = -g -Wall -Werror -ansi -pedantic -std=c99 
+LFLAGS = -lm -o $(OBJ)
 
-all: 1
-
-1: 1.o
-	$(CC) $(CFLAGS) -o 1 1.o
-
-1.o: 1.c
-	$(CC) $(CFLAGS) -c 1.c
+$(OBJ): $(OBJ).c 
+	$(CC) $(CFLAGS) $(OBJ).c $(LFLAGS) 
 
 
 clean: 
-	$(RM) 1 *.o *.~
+	$(RM) -f $(OBJ) *.o *.~
 
-run: 
-	mpiexec ./1
