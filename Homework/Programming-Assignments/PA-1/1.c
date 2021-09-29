@@ -7,7 +7,7 @@
  * BUGS: 
  * AUTHOR: xXxSpicyBoiiixXx
  * ORGANIZATION: Illinois Institute of Technology
- * VERSION: 1.0 
+ * VERSION: 1.4 
  * CREATED: 09/20/2021
  * REVISION: 
  */
@@ -20,25 +20,39 @@
 #include <time.h>
 #include <limits.h> 
 
-void powerOfTwo(int id, int numberProcesses);
-void getInput(int argc, char* argv[], int id, int numProcs, int* arraySize);
-void fillArray(int array[], int arraySize, int id);
-void printList(int id, char arrayName[], int array[], int arraySize);
-int compare(const void* a_p, const void* b_p);
-int* merge(int half1[], int half2[], int mergeResult[], int size);
-int* mergeSort(int height, int id, int localArray[], int size, MPI_Comm comm, int globalArray[]);
-
-void powerOfTwo(int id, int numberProcesses) {
+/*
+ * Function: powerOfTwo, this function checks if the number of process are a power of two. 
+ * 	     if not then an error message will appear on the console. 
+ * 	     
+ * Input: int id, an interger that represents the current rank of the current process 
+ * 	  int numberProcs, an interger with the total number of processes
+ */
+static void powerOfTwo(int id, int numberProcesses) {
 	int power;
+
 	power = (numberProcesses != 0) && ((numberProcesses & (numberProcesses - 1)) == 0);
+	
 	if (!power) {
-		if (id == 0) printf("number of processes must be power of 2 \n");
+		if (id == 0) {  
+			printf("Number of processes must be power of 2 \n"); 
+		} 
+		
 		MPI_Finalize();
 		exit(-1);
 	}
 }
 
-void getInput(int argc, char* argv[], int id, int numProcs, int* arraySize){
+
+/*
+ * Function: getInput, this function gets input from the user to construct an array size and then broadcasts it. 
+ * 
+ * Input: int argc, argument count 
+ * 	  char* argv[], points to arguement vector
+ * 	  int id, current rank of the current process 
+ * 	  int numProcs, number of processes 
+ * 	  int* arraySize, points to array size 
+ */
+static void getInput(int argc, char* argv[], int id, int numProcs, int* arraySize){
     if (id == 0){
         if (id % 2 != 0){
 			fprintf(stderr, "usage: mpirun -n <p> %s <size of array> \n", argv[0]);
@@ -56,37 +70,45 @@ void getInput(int argc, char* argv[], int id, int numProcs, int* arraySize){
             *arraySize = atoi(argv[1]);
         }
     }
-    // broadcast arraySize to all processes
+
     MPI_Bcast(arraySize, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    // negative arraySize ends the program
     if (*arraySize <= 0) {
         MPI_Finalize();
         exit(-1);
     }
 }
 
-
-void fillArray(int array[], int arraySize, int id) {
-	int i;
-	// use current time as seed for random generator
-	srand(id + time(0));
-	for (i = 0; i < arraySize; i++) {
+/*
+ * Function: initArray, this function populates an array with random numbers
+ *
+ * Input: int array[], an array of integers
+ * 	  int arraySize, array size 
+ * 	  int id, process id
+ */
+static inline void fillArray(int array[], int arraySize, int id) {
+	for (int i = 0; i < arraySize; i++) {
 		array[i] = rand() % 100; //INT_MAX
 	}
 }
 
 
-void printList(int id, char arrayName[], int array[], int arraySize) {
-    printf("Process %d, %s: ", id, arrayName);
+static void printList(char arrayName[], int array[], int arraySize) {
+    printf(arrayName);
     for (int i = 0; i < arraySize; i++) {
         printf(" %d", array[i]);
     }
     printf("\n");
 }
 
-
-int compare(const void* a_p, const void* b_p) {
+/*
+ * Function: compare, a compariosn function used in qsort function
+ *
+ * Input: comparison between two ints where either -1, 0, or 1 is 
+ * 	  return depending on if the first int is less than, equal,
+ * 	  or greater than the second.
+ */
+static int compare(const void* a_p, const void* b_p) {
    int a = *((int*)a_p);
    int b = *((int*)b_p);
 
@@ -99,7 +121,7 @@ int compare(const void* a_p, const void* b_p) {
 }
 
 
-int* merge(int half1[], int half2[], int mergeResult[], int size){
+static int* merge(int half1[], int half2[], int mergeResult[], int size){
     int ai, bi, ci;
     ai = bi = ci = 0;
     // integers remain in both arrays to compare
@@ -130,7 +152,7 @@ int* merge(int half1[], int half2[], int mergeResult[], int size){
 	return mergeResult;
 }
 
-int* mergeSort(int height, int id, int localArray[], int size, MPI_Comm comm, int globalArray[]){
+static int* mergeSort(int height, int id, int localArray[], int size, MPI_Comm comm, int globalArray[]){
     int parent, rightChild, myHeight;
     int *half1, *half2, *mergeResult;
 
@@ -179,8 +201,6 @@ int* mergeSort(int height, int id, int localArray[], int size, MPI_Comm comm, in
 int main(int argc, char** argv) {
     int numProcs, id, globalArraySize, localArraySize, height;
     int *localArray, *globalArray;
-    double startTime, localTime, totalTime;
-    double zeroStartTime, zeroTotalTime, processStartTime, processTotalTime;;
     int length = -1;
     char myHostName[MPI_MAX_PROCESSOR_NAME];
 
@@ -203,7 +223,7 @@ int main(int argc, char** argv) {
     if (id==0){
 		globalArray = (int*) malloc (globalArraySize * sizeof(int));
 		fillArray(globalArray, globalArraySize, id);
-		printList(id, "UNSORTED ARRAY", globalArray, globalArraySize);  // Line A
+		printList("UNSORTED ARRAY:", globalArray, globalArraySize);  // Line A
 	}
 	
     // allocate memory for local array, scatter to fill with values and print
@@ -211,33 +231,17 @@ int main(int argc, char** argv) {
     localArray = (int*) malloc (localArraySize * sizeof(int));
     MPI_Scatter(globalArray, localArraySize, MPI_INT, localArray, 
 		localArraySize, MPI_INT, 0, MPI_COMM_WORLD);
-    printList(id, "localArray", localArray, localArraySize);   // Line B 
     
-    //Start timing
-    startTime = MPI_Wtime();
     //Merge sort
     if (id == 0) {
-		zeroStartTime = MPI_Wtime();
 		globalArray = mergeSort(height, id, localArray, localArraySize, MPI_COMM_WORLD, globalArray);
-		zeroTotalTime = MPI_Wtime() - zeroStartTime;
-		printf("Process #%d of %d on %s took %f seconds \n", 
-			id, numProcs, myHostName, zeroTotalTime);
 	}
 	else {
-		processStartTime = MPI_Wtime();
 	        mergeSort(height, id, localArray, localArraySize, MPI_COMM_WORLD, NULL);
-		processTotalTime = MPI_Wtime() - processStartTime;
-		printf("Process #%d of %d on %s took %f seconds \n", 
-			id, numProcs, myHostName, processTotalTime);
 	}
-    //End timing
-    localTime = MPI_Wtime() - startTime;
-    MPI_Reduce(&localTime, &totalTime, 1, MPI_DOUBLE,
-        MPI_MAX, 0, MPI_COMM_WORLD);
 
     if (id == 0) {
-		printList(0, "FINAL SORTED ARRAY", globalArray, globalArraySize);  // Line C
-		printf("Sorting %d integers took %f seconds \n", globalArraySize,totalTime);
+		printList("FINAL SORTED ARRAY:", globalArray, globalArraySize);  // Line C
 		free(globalArray);
 	}
 
@@ -246,189 +250,3 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-
-
-/* 
-#define NUM_ELEMENTS 10
-
-
-// Will be keeping both either ints or unsigned ints. 
-static void print_array(int * arr, int len) { 
-	for(int i = 0; i < len; i++)
-		printf("%d ", arr[i]);
-	printf("\n");	
-}
-
-static inline void init_array(int * a, int len) {
-	for(int i = 0; i < len; i++) 
-		a[i] = rand() % NUM_ELEMENTS;
-}
-
-static inline void usage(char * prog) { 
-	printf("Usage: %s -n [number of processes]", prog); 
-}
-
-// comparison <--- fix for n ranks.  
-static int compare_int(const void *a, const void *b)
-{
-	return (*(int *) a - *(int *) b); 
-}
-
-static void merge(int *a, int numel_a, int *b, int numel_b)
-{
-	int *sorted = (int *) malloc((numel_a + numel_b) * sizeof *a);
-	int i, a_i = 0, b_i = 0; 
-	
-	for (i = 0; i < (numel_a + numel_b); i++) {
-		if(a_i < numel_a && b_i < numel_b) {
-			if(a[a_i] < b[b_i]) { 
-			sorted[i] = a[a_i];
-			a_i++;		
-		}
-		else {
-			sorted[i] = b[b_i];
-			b_i++;
-		}}
-	else { 
-		if(a_i < numel_a) {
-		sorted[i] = a[a_i];
-		a_i++;}	
- else {
-	sorted[i] = b[b_i];
-	b_i++;
-}
-}
-}
-
-memcpy(a, sorted, (numel_a + numel_b) * sizeof *sorted);
-free(sorted);
-}
-
-int main(int argc, char **argv) 
-{	
-	int data[NUM_ELEMENTS]; 
-	
-	int my_id, root_process, ierr, num_procs; 
-		
-	ierr =  MPI_Init(&argc, &argv);
-
-	root_process = 0; 
-	
-	ierr = MPI_Comm_rank(MPI_COMM_WORLD, &my_id); 
-	ierr = MPI_Comm_size(MPI_COMM_WORLD, &num_procs); 
-	
-	if(my_id == root_process) { 
-		printf("Unsorted:\t"); 
-		init_array(data, NUM_ELEMENTS); 
-		print_array(data, NUM_ELEMENTS); 
-	}
-
-}
-
-//
-int main(int argc, char **argv) 
-{
-	int rank, size, data[NUM_ELEMENTS]; 
-
-	int avg_data_per_process, num_procs; 
-
-	int data_tag = 1001;
-
-	int starting_index, ending_index, data_to_be_sent;
-	
-	MPI_Init(&argc, &argv); 
-	
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
-	MPI_Comm_size(MPI_COMM_WORLD, &size); 
-
-// Not sure what to do wit these yet..... we shall see!
-//	size_t len; 	
-//	len = atoll(argv[1]);
-
-	if(argc < 1) { 
-		usage(argv[0]);
-		MPI_Finalize(); 
-		exit(EXIT_SUCCESS); 	
-	}
-		
-	if(size != 2) { 
-		printf("Please run with exactly 2 rankss\n"); 
-		MPI_Finalize(); 
-		exit(0); 
-<<<<<<< HEAD
-	} 
-=======
-	}
->>>>>>> 12ccd66edd073d25e8b772a3558b1fbe4a9ded72
-
-//	int first_half = floor((double) NUM_ELEMENTS / 2); 
-//	int second_half = NUM_ELEMENTS - first_half; 
-
-//	srand(0); 
-
-	if(rank == 0) {
-	
-	printf("Please eneter how many processes you wanted to run at a time: ");
-	scanf("%i", &num_procs);
-	// intializing and printing
-	printf("Unsorted:\t"); 
-	init_array(data, NUM_ELEMENTS);
-	print_array(data, NUM_ELEMENTS);
- 	
-	avg_data_per_process = size / num_procs; 
-	
-	
-	// sends data to the other rank
-	MPI_Send(&data[first_half], second_half, MPI_INT, 1, 0, MPI_COMM_WORLD); 
-	
-	// sorts the first half
-	qsort(data, first_half, sizeof(int), compare_int); 
-
-	// receive sorted second half of the data
-	MPI_Recv(&data[first_half], second_half, MPI_INT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
-
-	// merging the two sorted arrays
-	merge(data, first_half, &data[first_half], second_half);
-	
-	for(int an_id = 1; an_id < num_procs; an_id++) {
-		starting_index = an_id * avg_data_per_process + 1;
-		ending_index = (an_id + 1) * avg_data_per_process; 
-	
-		if((starting_index - ending_index) < avg_data_per_process) 
-			ending_index = size - 1; 
-		
-		data_to_be_sent = ending_index - starting_index + 1;
-		
-		MPI_Send(&data[starting_index], ending_index, MPI_INT, an_id, data_tag, MPI_COMM_WORLD); 
-		qsort(data, starting_index, sizeof(int), compare_int); 
-		MPI_Recv(&data[starting_index], ending_index, MPI_INT, an_id, data_tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  
-		
-		merge(data, starting_index, &data[starting_index], ending_index);		
-		data_tag++; 
-
-	
-	}	
-
-	
-	// printing sorted array
-	printf("Sorted:\t\t"); 
-	print_array(data, NUM_ELEMENTS);	
-	
-	} else if (rank == 1) {
-		
-	// receives half of the data 
-//	MPI_Recv(data, second_half, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-	// sort the received data 
-//	qsort(data, second_half, sizeof(int), compare_int); 
-	
-	// send back sorted data 
-//	MPI_Send(data, second_half, MPI_INT, 0, 0, MPI_COMM_WORLD);	
- 	}
-
-MPI_Finalize();
-
-return 0;
-
-<<<<<<< HEAD
-}*/
