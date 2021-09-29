@@ -150,6 +150,28 @@ free(sorted);
 }
 
 int main(int argc, char **argv) 
+{	
+	int data[NUM_ELEMENTS]; 
+	
+	int my_id, root_process, ierr, num_procs; 
+		
+	ierr =  MPI_Init(&argc, &argv);
+
+	root_process = 0; 
+	
+	ierr = MPI_Comm_rank(MPI_COMM_WORLD, &my_id); 
+	ierr = MPI_Comm_size(MPI_COMM_WORLD, &num_procs); 
+	
+	if(my_id == root_process) { 
+		printf("Unsorted:\t"); 
+		init_array(data, NUM_ELEMENTS); 
+		print_array(data, NUM_ELEMENTS); 
+	}
+
+}
+
+/*
+int main(int argc, char **argv) 
 {
 	int rank, size, data[NUM_ELEMENTS]; 
 
@@ -178,7 +200,11 @@ int main(int argc, char **argv)
 		printf("Please run with exactly 2 rankss\n"); 
 		MPI_Finalize(); 
 		exit(0); 
+<<<<<<< HEAD
 	} 
+=======
+	}
+>>>>>>> 12ccd66edd073d25e8b772a3558b1fbe4a9ded72
 
 //	int first_half = floor((double) NUM_ELEMENTS / 2); 
 //	int second_half = NUM_ELEMENTS - first_half; 
@@ -249,4 +275,8 @@ MPI_Finalize();
 
 return 0;
 
+<<<<<<< HEAD
 }*/
+=======
+} */ 
+>>>>>>> 12ccd66edd073d25e8b772a3558b1fbe4a9ded72
