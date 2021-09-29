@@ -17,4 +17,4 @@ clean:
 	$(RM) 1 *.o *.~
 
 run: 
-	mpiexec -n 2 ./1
+	mpiexec ./1
