@@ -326,12 +326,16 @@ int main(int argc, char **argv)
 
         MPI_Waitall(8, reqs, MPI_STATUSES_IGNORE);
 	*/
+	int counts[4] = {bx, bx, by, by}; 
+	int displs[4] = {0, bx, 2*bx, 2*bx + by};
+	// ERROR~~ Good attempt.... 	
+	MPI_Alltoallv(sbufnorth, counts, &bx, MPI_DOUBLE, rbufnorth, counts , &bx, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Alltoallv(sbufsouth, counts, &bx, MPI_DOUBLE, rbufsouth,counts, &bx, MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Alltoallv(sbufeast, counts, &by, MPI_DOUBLE, rbufeast, counts, &by, MPI_DOUBLE, MPI_COMM_WORLD);  
+	MPI_Alltoallv(sbufwest, counts, &by, MPI_DOUBLE, rbufwest, counts, &by, MPI_DOUBLE, MPI_COMM_WORLD);
+     	
+
 	
-	MPI_Alltoallv(sbufnorth, bx, &reqs[0], MPI_DOUBLE, rbufnorth, bx, &reqs[4], MPI_DOUBLE, MPI_COMM_WORLD);
-	MPI_Alltoallv(sbufsouth, bx, &reqs[1], MPI_DOUBLE, rbufsouth, bx, &reqs[5], MPI_DOUBLE, MPI_COMM_WORLD);
-	MPI_Alltoallv(sbufeast, by, &reqs[2], MPI_DOUBLE, rbufeast, by, &reqs[6], MPI_DOUBLE, MPI_COMM_WORLD);  
-	MPI_Alltoallv(sbufwest, by, &reqs[3], MPI_DOUBLE, rbufwest, by, &reqs[7], MPI_DOUBLE, MPI_COMM_WORLD);
-     
         unpack_data(bx, by, aold, rbufnorth, rbufsouth, rbufeast, rbufwest);
 
         /* update grid points */
