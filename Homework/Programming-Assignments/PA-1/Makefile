@@ -2,7 +2,7 @@
 CC = mpicc
 OBJ = 1
 # flags
-CFLAGS = -g -Wall -Werror -ansi -pedantic -std=c99 
+CFLAGS = -g -Wall -Werror 
 LFLAGS = -lm -o $(OBJ)
 
 $(OBJ): $(OBJ).c 

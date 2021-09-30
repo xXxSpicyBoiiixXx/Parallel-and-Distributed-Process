@@ -100,7 +100,7 @@ static inline void initArray(int array[], int arraySize, int id) {
  *        int arraySize, the size of the array
  */
 static void printArray(char arrayName[], int array[], int arraySize) {
-    printf(arrayName);
+    printf("%s", arrayName);
     for (int i = 0; i < arraySize; i++) {
         printf(" %d", array[i]);
     }
@@ -135,7 +135,7 @@ static int compare(const void* a_p, const void* b_p) {
  *         int size, the size of the array itself
  */
 static int* merge(int half1[], int half2[], int mergeResult[], int size){
-    int i, b, k;
+    int i, j, k;
     i = j = k = 0;
     
     while ((i < size) && (j < size)){
