@@ -242,6 +242,7 @@ int main(int argc, char** argv) {
 		sharedArray = (int*) malloc (sharedArraySize * sizeof(int));
 		initArray(sharedArray, sharedArraySize, id);
 		printArray("UNSORTED ARRAY:", sharedArray, sharedArraySize);
+		printf("\n");
 	}
 	
     localArraySize = sharedArraySize / numProcs;
