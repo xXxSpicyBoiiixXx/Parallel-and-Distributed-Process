@@ -33,16 +33,14 @@
 #define ind(i,j) ((j)*(bx+2)+(i))
 
 /*
- * Function: A return function with the parameters of i, j, and bx where the index of ind(i, j) are returned
- *
- * Input: int i, row
- *        int j, coloumn
- * COME BACK TO
+ * Function: Unused function according to compiler 
  */
+
 static int ind_f(int i, int j, int bx)
 {
     return ind(i, j);
 }
+
 
 /* COME BACK TO CLEAN UP
  * Function setup, setting up the grid, energy to be injected, etc.

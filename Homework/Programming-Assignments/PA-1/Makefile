@@ -4,7 +4,7 @@ OBJ1 = exercise-1
 OBJ2 = exercise-2
 
 # flags
-CFLAGS = -g -Wall -Werror 
+CFLAGS = -g -Wall -lm -O3
 
 all: $(OBJ1) $(OBJ2)
 
