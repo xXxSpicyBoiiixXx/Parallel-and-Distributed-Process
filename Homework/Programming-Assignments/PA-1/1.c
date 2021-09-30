@@ -1,11 +1,11 @@
 /*
  * FILE:
- * USAGE:
+ * USAGE: mpirun -np <number of processes> ./
  * DESCRIPTION: 
  * OPTIONS:
  * REQUIREMENTS: 
  * BUGS: 
- * AUTHOR: xXxSpicyBoiiixXx
+ * AUTHOR: xXxSpicyBoiiixXx (Md Ali)
  * ORGANIZATION: Illinois Institute of Technology
  * VERSION: 1.4 
  * CREATED: 09/20/2021
@@ -25,12 +25,12 @@
  * 	     if not then an error message will appear on the console. 
  * 	     
  * Input: int id, an interger that represents the current rank of the current process 
- * 	  int numberProcs, an interger with the total number of processes
+ * 	  int numProcs, an interger with the total number of processes
  */
-static void powerOfTwo(int id, int numberProcesses) {
+static void powerOfTwo(int id, int numProcs) {
 	int power;
 
-	power = (numberProcesses != 0) && ((numberProcesses & (numberProcesses - 1)) == 0);
+	power = (numProcs != 0) && ((numProcs & (numProcs - 1)) == 0);
 	
 	if (!power) {
 		if (id == 0) {  
@@ -86,14 +86,20 @@ static void getInput(int argc, char* argv[], int id, int numProcs, int* arraySiz
  * 	  int arraySize, array size 
  * 	  int id, process id
  */
-static inline void fillArray(int array[], int arraySize, int id) {
+static inline void initArray(int array[], int arraySize, int id) {
 	for (int i = 0; i < arraySize; i++) {
 		array[i] = rand() % 100; //INT_MAX
 	}
 }
 
-
-static void printList(char arrayName[], int array[], int arraySize) {
+/*
+ * Function: printArray, this function prints an array with user inputted description
+ *
+ * Input: char arrayName[], naming array input
+ *        int array[], the array itself
+ *        int arraySize, the size of the array
+ */
+static void printArray(char arrayName[], int array[], int arraySize) {
     printf(arrayName);
     for (int i = 0; i < arraySize; i++) {
         printf(" %d", array[i]);
@@ -116,76 +122,90 @@ static int compare(const void* a_p, const void* b_p) {
       return -1;
    else if (a == b)
       return 0;
-   else /* a > b */
+   else
       return 1;
 }
 
-
+/*
+ * Function: merge, merging two halves of an array into one
+ *
+ * Input: int half1[], the first half of the array or part of one
+ *        int half2[], the second half of the array or part of one
+ *        int mergeResult[], the result of putting them together
+ *         int size, the size of the array itself
+ */
 static int* merge(int half1[], int half2[], int mergeResult[], int size){
-    int ai, bi, ci;
-    ai = bi = ci = 0;
-    // integers remain in both arrays to compare
-    while ((ai < size) && (bi < size)){
-        if (half1[ai] <= half2[bi]){
-			mergeResult[ci] = half1[ai];
-			ai++;
+    int i, b, k;
+    i = j = k = 0;
+    
+    while ((i < size) && (j < size)){
+        if (half1[i] <= half2[j]){
+			mergeResult[k] = half1[i];
+			i++;
 		} else {
-			mergeResult[ci] = half2[bi];
-			bi++;
+			mergeResult[k] = half2[j];
+			j++;
 		}
-			ci++;
+			k++;
 	}
-	// integers only remain in rightArray
-	if (ai >= size){
-        while (bi < size) {
-			mergeResult[ci] = half2[bi];
-			bi++; ci++;
+	
+	if (i >= size){
+        while (j < size) {
+			mergeResult[k] = half2[j];
+			j++; k++;
 		}
 	}
-	// integers only remain in localArray
-	if (bi >= size){
-		while (ai < size) {
-			mergeResult[ci] = half1[ai];
-			ai++; ci++;
+    
+	if (j >= size){
+		while (i < size) {
+			mergeResult[k] = half1[i];
+			i++; k++;
 		}
 	}
 	return mergeResult;
 }
 
-static int* mergeSort(int height, int id, int localArray[], int size, MPI_Comm comm, int globalArray[]){
+/*
+ * Function: mergeSort, sorting algorithm for merging sorted arrays from processes until we have one array
+ *
+ * Input: int height, height of the tree
+ *        int id, rank of the current process
+ *        int localArray[], the local array a certain processes has
+ *        int size, size of the localArray of the current process
+ *        MPI_Comm comm, MPI communicator for communication with other processes
+ *        int sharedArray[], sharedArray between all processes
+ */
+static int* mergeSort(int height, int id, int localArray[], int size, MPI_Comm comm, int sharedArray[]){
     int parent, rightChild, myHeight;
     int *half1, *half2, *mergeResult;
 
     myHeight = 0;
-    qsort(localArray, size, sizeof(int), compare); // sort local array
-    half1 = localArray;  // assign half1 to localArray
+    qsort(localArray, size, sizeof(int), compare);
+    half1 = localArray;
 	
-    while (myHeight < height) { // not yet at top
+    while (myHeight < height) {
         parent = (id & (~(1 << myHeight)));
 
-        if (parent == id) { // left child
+        if (parent == id) {
 		    rightChild = (id | (1 << myHeight));
 
-  		    // allocate memory and receive array of right child
+  		    
   		    half2 = (int*) malloc (size * sizeof(int));
   		    MPI_Recv(half2, size, MPI_INT, rightChild, 0,
 				MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  		    // allocate memory for result of merge
+  		    
   		    mergeResult = (int*) malloc (size * 2 * sizeof(int));
-  		    // merge half1 and half2 into mergeResult
   		    mergeResult = merge(half1, half2, mergeResult, size);
-  		    // reassign half1 to merge result
             half1 = mergeResult;
-			size = size * 2;  // double size
+			size = size * 2;
 			
 			free(half2); 
 			mergeResult = NULL;
 
             myHeight++;
 
-        } else { // right child
-			  // send local array to parent
+        } else {
               MPI_Send(half1, size, MPI_INT, parent, 0, MPI_COMM_WORLD);
               if(myHeight != 0) free(half1);  
               myHeight = height;
@@ -193,14 +213,14 @@ static int* mergeSort(int height, int id, int localArray[], int size, MPI_Comm c
     }
 
     if(id == 0){
-		globalArray = half1;   // reassign globalArray to half1
+		sharedArray = half1;
 	}
-	return globalArray;
+	return sharedArray;
 }
 
 int main(int argc, char** argv) {
-    int numProcs, id, globalArraySize, localArraySize, height;
-    int *localArray, *globalArray;
+    int numProcs, id, sharedArraySize, localArraySize, height;
+    int *localArray, *sharedArray;
     int length = -1;
     char myHostName[MPI_MAX_PROCESSOR_NAME];
 
@@ -210,39 +230,35 @@ int main(int argc, char** argv) {
 
     MPI_Get_processor_name (myHostName, &length); 
 
-    // check for odd processes
     powerOfTwo(id, numProcs);
 
-    // get size of global array
-    getInput(argc, argv, id, numProcs, &globalArraySize);
+    getInput(argc, argv, id, numProcs, &sharedArraySize);
 
-    // calculate total height of tree
     height = log2(numProcs);
 
-    // if process 0, allocate memory for global array and fill with values
     if (id==0){
-		globalArray = (int*) malloc (globalArraySize * sizeof(int));
-		fillArray(globalArray, globalArraySize, id);
-		printList("UNSORTED ARRAY:", globalArray, globalArraySize);  // Line A
+		sharedArray = (int*) malloc (sharedArraySize * sizeof(int));
+		initArray(sharedArray, sharedArraySize, id);
+		printArray("UNSORTED ARRAY:", sharedArray, sharedArraySize);  // Line A
 	}
 	
     // allocate memory for local array, scatter to fill with values and print
-    localArraySize = globalArraySize / numProcs;
+    localArraySize = sharedArraySize / numProcs;
     localArray = (int*) malloc (localArraySize * sizeof(int));
-    MPI_Scatter(globalArray, localArraySize, MPI_INT, localArray, 
+    MPI_Scatter(sharedArray, localArraySize, MPI_INT, localArray,
 		localArraySize, MPI_INT, 0, MPI_COMM_WORLD);
     
     //Merge sort
     if (id == 0) {
-		globalArray = mergeSort(height, id, localArray, localArraySize, MPI_COMM_WORLD, globalArray);
+		sharedArray = mergeSort(height, id, localArray, localArraySize, MPI_COMM_WORLD, sharedArray);
 	}
 	else {
 	        mergeSort(height, id, localArray, localArraySize, MPI_COMM_WORLD, NULL);
 	}
 
     if (id == 0) {
-		printList("FINAL SORTED ARRAY:", globalArray, globalArraySize);  // Line C
-		free(globalArray);
+		printArray("FINAL SORTED ARRAY:", sharedArray, sharedArraySize);
+		free(sharedArray);
 	}
 
     free(localArray);  
