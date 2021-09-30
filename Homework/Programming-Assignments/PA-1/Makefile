@@ -1,14 +1,16 @@
 # For MPI programs 
 CC = mpicc
-OBJ = exercise-1
+OBJ1 = exercise-1
+OBJ2 = exercise-2
 # flags
-CFLAGS = -g -Wall -Werror 
-LFLAGS = -lm -o $(OBJ)
+CFLAGS = -g -Wall -Werror
 
-$(OBJ): $(OBJ).c 
-	$(CC) $(CFLAGS) $(OBJ).c $(LFLAGS) 
+$(OBJ1): $(OBJ1).c
+	$(CC) $(CFLAGS) $(OBJ1).c -o $(OBJ1)
 
-
-clean: 
-	$(RM) -rf exercise-1 *.o *.~ *.dSYM 
+$(OBJ2): $(OBJ2).c
+	$(CC): $(CFLAGS) $(OBJ2).c -o $(OBJ2)
+	
+clean:
+	$(RM) -rf exercise-1 exercise-2 *.o *.~ *.dSYM 
 

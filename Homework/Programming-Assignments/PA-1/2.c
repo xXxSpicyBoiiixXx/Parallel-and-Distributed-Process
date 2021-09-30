@@ -1,3 +1,16 @@
+/*
+ * FILE: exercise-2.c
+ * USAGE:
+ * DESCRIPTION:
+ * OPTIONS:
+ * REQUIREMENTS: MPI interface
+ * BUGS: N/A
+ * AUTHOR: xXxSpicyBoiiixXx (Md Ali)
+ * ORGANIZATION: Illinois Institute of Technology
+ * VERSION: 1.0
+ * CREATED: 09/30/2021
+ * REVISION: N/A
+ */
 
 /*
  * 2D stencil code using a nonblocking send/receive with manual packing/unpacking.
@@ -21,28 +34,28 @@ int ind_f(int i, int j, int bx)
     return ind(i, j);
 }
 
-void setup(int rank, int proc, int argc, char **argv,
+static void setup(int rank, int proc, int argc, char **argv,
            int *n_ptr, int *energy_ptr, int *niters_ptr, int *px_ptr, int *py_ptr, int *final_flag);
 
-void init_sources(int bx, int by, int offx, int offy, int n,
+static void init_sources(int bx, int by, int offx, int offy, int n,
                   const int nsources, int sources[][2], int *locnsources_ptr, int locsources[][2]);
 
-void alloc_bufs(int bx, int by,
+static void alloc_bufs(int bx, int by,
                 double **aold_ptr, double **anew_ptr,
                 double **sbufnorth_ptr, double **sbufsouth_ptr,
                 double **sbufeast_ptr, double **sbufwest_ptr,
                 double **rbufnorth_ptr, double **rbufsouth_ptr,
                 double **rbufeast_ptr, double **rbufwest_ptr);
 
-void pack_data(int bx, int by, double *aold,
+static void pack_data(int bx, int by, double *aold,
                double *sbufnorth, double *sbufsouth, double *sbfueast, double *sbufwest);
 
-void unpack_data(int bx, int by, double *aold,
+static void unpack_data(int bx, int by, double *aold,
                  double *rbufnorth, double *rbufsouth, double *rbufeast, double *rbufwest);
 
-void update_grid(int bx, int by, double *aold, double *anew, double *heat_ptr);
+static void update_grid(int bx, int by, double *aold, double *anew, double *heat_ptr);
 
-void free_bufs(double *aold, double *anew,
+static void free_bufs(double *aold, double *anew,
                double *sbufnorth, double *sbufsouth,
                double *sbufeast, double *sbufwest,
                double *rbufnorth, double *rbufsouth, double *rbufeast, double *rbufwest);
@@ -134,7 +147,8 @@ int main(int argc, char **argv)
 
         /* pack data */
         pack_data(bx, by, aold, sbufnorth, sbufsouth, sbufeast, sbufwest);
-
+        
+        // NEED TO CHANGE THIS
         /* exchange data with neighbors */
         MPI_Isend(sbufnorth, bx, MPI_DOUBLE, north, 9, MPI_COMM_WORLD, &reqs[0]);
         MPI_Isend(sbufsouth, bx, MPI_DOUBLE, south, 9, MPI_COMM_WORLD, &reqs[1]);
