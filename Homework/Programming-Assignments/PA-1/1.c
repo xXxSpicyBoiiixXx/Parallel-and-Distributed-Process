@@ -1,15 +1,17 @@
 /*
- * FILE:
- * USAGE: mpirun -np <number of processes> ./
- * DESCRIPTION: 
- * OPTIONS:
- * REQUIREMENTS: 
- * BUGS: 
+ * FILE: exercise-1.c
+ * USAGE: mpirun -n <number of processes> ./exercise-1 <array size>
+ * DESCRIPTION: We are asked to implement a sorting algorithm for an arbitary number of processes and try scattering and gather chunks by using collective calls in MPI.
+ Here we utilized our own code utilizing merge sort where each process will get the exact amount to sort and then reconstruct the sorted arrays that are
+ then merged together and displayed on the console
+ * OPTIONS: -n
+ * REQUIREMENTS: MPI interface
+ * BUGS: N/A
  * AUTHOR: xXxSpicyBoiiixXx (Md Ali)
  * ORGANIZATION: Illinois Institute of Technology
  * VERSION: 1.4 
  * CREATED: 09/20/2021
- * REVISION: 
+ * REVISION: N/A
  */
 
 #include <mpi.h>
@@ -239,16 +241,14 @@ int main(int argc, char** argv) {
     if (id==0){
 		sharedArray = (int*) malloc (sharedArraySize * sizeof(int));
 		initArray(sharedArray, sharedArraySize, id);
-		printArray("UNSORTED ARRAY:", sharedArray, sharedArraySize);  // Line A
+		printArray("UNSORTED ARRAY:", sharedArray, sharedArraySize);
 	}
 	
-    // allocate memory for local array, scatter to fill with values and print
     localArraySize = sharedArraySize / numProcs;
     localArray = (int*) malloc (localArraySize * sizeof(int));
     MPI_Scatter(sharedArray, localArraySize, MPI_INT, localArray,
 		localArraySize, MPI_INT, 0, MPI_COMM_WORLD);
     
-    //Merge sort
     if (id == 0) {
 		sharedArray = mergeSort(height, id, localArray, localArraySize, MPI_COMM_WORLD, sharedArray);
 	}

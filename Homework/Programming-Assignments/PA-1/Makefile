@@ -1,6 +1,6 @@
 # For MPI programs 
 CC = mpicc
-OBJ = 1
+OBJ = exercise-1
 # flags
 CFLAGS = -g -Wall -Werror 
 LFLAGS = -lm -o $(OBJ)
@@ -10,5 +10,5 @@ $(OBJ): $(OBJ).c
 
 
 clean: 
-	$(RM) -f $(OBJ) *.o *.~
+	$(RM) -rf exercise-1 *.o *.~ *.dSYM 
 
