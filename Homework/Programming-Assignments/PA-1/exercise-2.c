@@ -74,6 +74,9 @@ static void setup(int rank, int proc, int argc, char **argv,
     px = atoi(argv[4]); /* 1st dim processes */
     py = atoi(argv[5]); /* 2nd dim processes */
 
+//    int args[3] = {n, energy, niters}; 
+//    MPI_Bcast(args, 3, MPI_INT, 0, comm);
+
     if (px * py != proc)
         MPI_Abort(MPI_COMM_WORLD, 1);   /* abort if px or py are wrong */
     if (n % px != 0)
@@ -287,7 +290,7 @@ int main(int argc, char **argv)
     offx = rx * bx;     /* offset in x */
     offy = ry * by;     /* offset in y */
 
-    /* printf("%i (%i,%i) - w: %i, e: %i, n: %i, s: %i\n", rank, ry,rx,west,east,north,south); */
+    printf("%i (%i,%i) - w: %i, e: %i, n: %i, s: %i\n", rank, ry,rx,west,east,north,south);
 
     /* initialize three heat sources */
     init_sources(bx, by, offx, offy, n, nsources, sources, &locnsources, locsources);
@@ -326,14 +329,15 @@ int main(int argc, char **argv)
 
         MPI_Waitall(8, reqs, MPI_STATUSES_IGNORE);
 	*/
-	int counts[4] = {bx, bx, by, by}; 
+	
+	/*int counts[4] = {bx, bx, by, by}; 
 	int displs[4] = {0, bx, 2*bx, 2*bx + by};
 	// ERROR~~ Good attempt.... 	
 	MPI_Alltoallv(sbufnorth, counts, &bx, MPI_DOUBLE, rbufnorth, counts , &bx, MPI_DOUBLE, MPI_COMM_WORLD);
 	MPI_Alltoallv(sbufsouth, counts, &bx, MPI_DOUBLE, rbufsouth,counts, &bx, MPI_DOUBLE, MPI_COMM_WORLD);
 	MPI_Alltoallv(sbufeast, counts, &by, MPI_DOUBLE, rbufeast, counts, &by, MPI_DOUBLE, MPI_COMM_WORLD);  
 	MPI_Alltoallv(sbufwest, counts, &by, MPI_DOUBLE, rbufwest, counts, &by, MPI_DOUBLE, MPI_COMM_WORLD);
-     	
+     	*/
 
 	
         unpack_data(bx, by, aold, rbufnorth, rbufsouth, rbufeast, rbufwest);
