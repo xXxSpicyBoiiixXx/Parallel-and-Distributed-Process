@@ -1,4 +1,18 @@
+/*
+ * FILE: exercise-2.c
+ * USAGE:
+ * DESCRIPTION:
+ * OPTIONS:
+ * REQUIREMENTS: MPI interface
+ * BUGS: N/A
+ * AUTHOR: xXxSpicyBoiiixXx (Md Ali)
+ * ORGANIZATION: Illinois Institute of Technology
+ * VERSION: 1.0
+ * CREATED: 09/30/2021
+ * REVISION: N/A
+ */
 
+/*-----Original Description of program-----*/
 /*
  * 2D stencil code using a nonblocking send/receive with manual packing/unpacking.
  *
@@ -6,6 +20,8 @@
  * In every iteration, each process calls nonblocking operations to exchange a halo with
  * neighbors. Grid points in a halo are packed and unpacked before and after communications.
  */
+/*---------------------------------------*/
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,36 +32,198 @@
 /* row-major order */
 #define ind(i,j) ((j)*(bx+2)+(i))
 
-int ind_f(int i, int j, int bx)
+/*
+ * Function: A return function with the parameters of i, j, and bx where the index of ind(i, j) are returned
+ *
+ * Input: int i, row
+ *        int j, coloumn
+ * COME BACK TO
+ */
+static int ind_f(int i, int j, int bx)
 {
     return ind(i, j);
 }
 
-void setup(int rank, int proc, int argc, char **argv,
-           int *n_ptr, int *energy_ptr, int *niters_ptr, int *px_ptr, int *py_ptr, int *final_flag);
+/* COME BACK TO CLEAN UP
+ * Function setup, setting up the grid, energy to be injected, etc.
+ *
+ * Input: int rank, ????
+ *        int proc, process number
+ *        int argc, argument count
+ *        int arcv, argument values
+ *        int *n_ptr, pointer toward n
+ *        int *px_ptr, pointer towards px
+ *        int *py_ptr, pointer towards py
+ *        int *final_flag, pointer towards final flag???? why
+ */
+static void setup(int rank, int proc, int argc, char **argv,
+           int *n_ptr, int *energy_ptr, int *niters_ptr, int *px_ptr, int *py_ptr, int *final_flag)
+{
+    int n, energy, niters, px, py;
 
-void init_sources(int bx, int by, int offx, int offy, int n,
-                  const int nsources, int sources[][2], int *locnsources_ptr, int locsources[][2]);
+    (*final_flag) = 0;
 
-void alloc_bufs(int bx, int by,
-                double **aold_ptr, double **anew_ptr,
+    if (argc < 6) {
+        if (!rank)
+            printf("usage: stencil_mpi <n> <energy> <niters> <px> <py>\n");
+        (*final_flag) = 1;
+        return;
+    }
+
+    n = atoi(argv[1]);  /* nxn grid */
+    energy = atoi(argv[2]);     /* energy to be injected per iteration */
+    niters = atoi(argv[3]);     /* number of iterations */
+    px = atoi(argv[4]); /* 1st dim processes */
+    py = atoi(argv[5]); /* 2nd dim processes */
+
+    if (px * py != proc)
+        MPI_Abort(MPI_COMM_WORLD, 1);   /* abort if px or py are wrong */
+    if (n % px != 0)
+        MPI_Abort(MPI_COMM_WORLD, 2);   /* abort px needs to divide n */
+    if (n % py != 0)
+        MPI_Abort(MPI_COMM_WORLD, 3);   /* abort py needs to divide n */
+
+    (*n_ptr) = n;
+    (*energy_ptr) = energy;
+    (*niters_ptr) = niters;
+    (*px_ptr) = px;
+    (*py_ptr) = py;
+}
+
+static void init_sources(int bx, int by, int offx, int offy, int n,
+                  const int nsources, int sources[][2], int *locnsources_ptr, int locsources[][2])
+{
+    int i, locnsources = 0;
+
+    sources[0][0] = n / 2;
+    sources[0][1] = n / 2;
+    sources[1][0] = n / 3;
+    sources[1][1] = n / 3;
+    sources[2][0] = n * 4 / 5;
+    sources[2][1] = n * 8 / 9;
+
+    for (i = 0; i < nsources; ++i) {    /* determine which sources are in my patch */
+        int locx = sources[i][0] - offx;
+        int locy = sources[i][1] - offy;
+        if (locx >= 0 && locx < bx && locy >= 0 && locy < by) {
+            locsources[locnsources][0] = locx + 1;      /* offset by halo zone */
+            locsources[locnsources][1] = locy + 1;      /* offset by halo zone */
+            locnsources++;
+        }
+    }
+
+    (*locnsources_ptr) = locnsources;
+}
+
+static void alloc_bufs(int bx, int by, double **aold_ptr, double **anew_ptr,
                 double **sbufnorth_ptr, double **sbufsouth_ptr,
                 double **sbufeast_ptr, double **sbufwest_ptr,
                 double **rbufnorth_ptr, double **rbufsouth_ptr,
-                double **rbufeast_ptr, double **rbufwest_ptr);
+                double **rbufeast_ptr, double **rbufwest_ptr)
+{
+    double *aold, *anew;
+    double *sbufnorth, *sbufsouth, *sbufeast, *sbufwest;
+    double *rbufnorth, *rbufsouth, *rbufeast, *rbufwest;
 
-void pack_data(int bx, int by, double *aold,
-               double *sbufnorth, double *sbufsouth, double *sbfueast, double *sbufwest);
+    /* allocate two working arrays */
+    anew = (double *) malloc((bx + 2) * (by + 2) * sizeof(double));     /* 1-wide halo zones! */
+    aold = (double *) malloc((bx + 2) * (by + 2) * sizeof(double));     /* 1-wide halo zones! */
 
-void unpack_data(int bx, int by, double *aold,
-                 double *rbufnorth, double *rbufsouth, double *rbufeast, double *rbufwest);
+    memset(aold, 0, (bx + 2) * (by + 2) * sizeof(double));
+    memset(anew, 0, (bx + 2) * (by + 2) * sizeof(double));
 
-void update_grid(int bx, int by, double *aold, double *anew, double *heat_ptr);
+    /* allocate communication buffers */
+    sbufnorth = (double *) malloc(bx * sizeof(double)); /* send buffers */
+    sbufsouth = (double *) malloc(bx * sizeof(double));
+    sbufeast = (double *) malloc(by * sizeof(double));
+    sbufwest = (double *) malloc(by * sizeof(double));
+    rbufnorth = (double *) malloc(bx * sizeof(double)); /* receive buffers */
+    rbufsouth = (double *) malloc(bx * sizeof(double));
+    rbufeast = (double *) malloc(by * sizeof(double));
+    rbufwest = (double *) malloc(by * sizeof(double));
 
-void free_bufs(double *aold, double *anew,
+    memset(sbufnorth, 0, bx * sizeof(double));
+    memset(sbufsouth, 0, bx * sizeof(double));
+    memset(sbufeast, 0, by * sizeof(double));
+    memset(sbufwest, 0, by * sizeof(double));
+    memset(rbufnorth, 0, bx * sizeof(double));
+    memset(rbufsouth, 0, bx * sizeof(double));
+    memset(rbufeast, 0, by * sizeof(double));
+    memset(rbufwest, 0, by * sizeof(double));
+
+    (*aold_ptr) = aold;
+    (*anew_ptr) = anew;
+    (*sbufnorth_ptr) = sbufnorth;
+    (*sbufsouth_ptr) = sbufsouth;
+    (*sbufeast_ptr) = sbufeast;
+    (*sbufwest_ptr) = sbufwest;
+    (*rbufnorth_ptr) = rbufnorth;
+    (*rbufsouth_ptr) = rbufsouth;
+    (*rbufeast_ptr) = rbufeast;
+    (*rbufwest_ptr) = rbufwest;
+}
+
+static void free_bufs(double *aold, double *anew,
                double *sbufnorth, double *sbufsouth,
                double *sbufeast, double *sbufwest,
-               double *rbufnorth, double *rbufsouth, double *rbufeast, double *rbufwest);
+               double *rbufnorth, double *rbufsouth, double *rbufeast, double *rbufwest)
+{
+    free(aold);
+    free(anew);
+    free(sbufnorth);
+    free(sbufsouth);
+    free(sbufeast);
+    free(sbufwest);
+    free(rbufnorth);
+    free(rbufsouth);
+    free(rbufeast);
+    free(rbufwest);
+}
+
+static void pack_data(int bx, int by, double *aold,
+               double *sbufnorth, double *sbufsouth, double *sbufeast, double *sbufwest)
+{
+    int i;
+    for (i = 0; i < bx; ++i)
+        sbufnorth[i] = aold[ind(i + 1, 1)];     /* #1 row */
+    for (i = 0; i < bx; ++i)
+        sbufsouth[i] = aold[ind(i + 1, by)];    /* #(by) row */
+    for (i = 0; i < by; ++i)
+        sbufeast[i] = aold[ind(bx, i + 1)];     /* #(bx) col */
+    for (i = 0; i < by; ++i)
+        sbufwest[i] = aold[ind(1, i + 1)];      /* #1 col */
+}
+
+static void unpack_data(int bx, int by, double *aold,
+                 double *rbufnorth, double *rbufsouth, double *rbufeast, double *rbufwest)
+{
+    int i;
+    for (i = 0; i < bx; ++i)
+        aold[ind(i + 1, 0)] = rbufnorth[i];     /* #0 row */
+    for (i = 0; i < bx; ++i)
+        aold[ind(i + 1, by + 1)] = rbufsouth[i];        /* #(by+1) row */
+    for (i = 0; i < by; ++i)
+        aold[ind(bx + 1, i + 1)] = rbufeast[i]; /* #(bx+1) col */
+    for (i = 0; i < by; ++i)
+        aold[ind(0, i + 1)] = rbufwest[i];      /* #0 col */
+}
+
+static void update_grid(int bx, int by, double *aold, double *anew, double *heat_ptr)
+{
+    int i, j;
+    double heat = 0.0;
+
+    for (i = 1; i < bx + 1; ++i) {
+        for (j = 1; j < by + 1; ++j) {
+            anew[ind(i, j)] =
+                anew[ind(i, j)] / 2.0 + (aold[ind(i - 1, j)] + aold[ind(i + 1, j)] +
+                                         aold[ind(i, j - 1)] + aold[ind(i, j + 1)]) / 4.0 / 2.0;
+            heat += anew[ind(i, j)];
+        }
+    }
+
+    (*heat_ptr) = heat;
+}
 
 int main(int argc, char **argv)
 {
@@ -134,7 +312,8 @@ int main(int argc, char **argv)
 
         /* pack data */
         pack_data(bx, by, aold, sbufnorth, sbufsouth, sbufeast, sbufwest);
-
+        
+        // NEED TO CHANGE THIS
         /* exchange data with neighbors */
         MPI_Isend(sbufnorth, bx, MPI_DOUBLE, north, 9, MPI_COMM_WORLD, &reqs[0]);
         MPI_Isend(sbufsouth, bx, MPI_DOUBLE, south, 9, MPI_COMM_WORLD, &reqs[1]);
@@ -173,173 +352,4 @@ int main(int argc, char **argv)
 
     MPI_Finalize();
     return 0;
-}
-
-void setup(int rank, int proc, int argc, char **argv,
-           int *n_ptr, int *energy_ptr, int *niters_ptr, int *px_ptr, int *py_ptr, int *final_flag)
-{
-    int n, energy, niters, px, py;
-
-    (*final_flag) = 0;
-
-    if (argc < 6) {
-        if (!rank)
-            printf("usage: stencil_mpi <n> <energy> <niters> <px> <py>\n");
-        (*final_flag) = 1;
-        return;
-    }
-
-    n = atoi(argv[1]);  /* nxn grid */
-    energy = atoi(argv[2]);     /* energy to be injected per iteration */
-    niters = atoi(argv[3]);     /* number of iterations */
-    px = atoi(argv[4]); /* 1st dim processes */
-    py = atoi(argv[5]); /* 2nd dim processes */
-
-    if (px * py != proc)
-        MPI_Abort(MPI_COMM_WORLD, 1);   /* abort if px or py are wrong */
-    if (n % px != 0)
-        MPI_Abort(MPI_COMM_WORLD, 2);   /* abort px needs to divide n */
-    if (n % py != 0)
-        MPI_Abort(MPI_COMM_WORLD, 3);   /* abort py needs to divide n */
-
-    (*n_ptr) = n;
-    (*energy_ptr) = energy;
-    (*niters_ptr) = niters;
-    (*px_ptr) = px;
-    (*py_ptr) = py;
-}
-
-void init_sources(int bx, int by, int offx, int offy, int n,
-                  const int nsources, int sources[][2], int *locnsources_ptr, int locsources[][2])
-{
-    int i, locnsources = 0;
-
-    sources[0][0] = n / 2;
-    sources[0][1] = n / 2;
-    sources[1][0] = n / 3;
-    sources[1][1] = n / 3;
-    sources[2][0] = n * 4 / 5;
-    sources[2][1] = n * 8 / 9;
-
-    for (i = 0; i < nsources; ++i) {    /* determine which sources are in my patch */
-        int locx = sources[i][0] - offx;
-        int locy = sources[i][1] - offy;
-        if (locx >= 0 && locx < bx && locy >= 0 && locy < by) {
-            locsources[locnsources][0] = locx + 1;      /* offset by halo zone */
-            locsources[locnsources][1] = locy + 1;      /* offset by halo zone */
-            locnsources++;
-        }
-    }
-
-    (*locnsources_ptr) = locnsources;
-}
-
-void alloc_bufs(int bx, int by, double **aold_ptr, double **anew_ptr,
-                double **sbufnorth_ptr, double **sbufsouth_ptr,
-                double **sbufeast_ptr, double **sbufwest_ptr,
-                double **rbufnorth_ptr, double **rbufsouth_ptr,
-                double **rbufeast_ptr, double **rbufwest_ptr)
-{
-    double *aold, *anew;
-    double *sbufnorth, *sbufsouth, *sbufeast, *sbufwest;
-    double *rbufnorth, *rbufsouth, *rbufeast, *rbufwest;
-
-    /* allocate two working arrays */
-    anew = (double *) malloc((bx + 2) * (by + 2) * sizeof(double));     /* 1-wide halo zones! */
-    aold = (double *) malloc((bx + 2) * (by + 2) * sizeof(double));     /* 1-wide halo zones! */
-
-    memset(aold, 0, (bx + 2) * (by + 2) * sizeof(double));
-    memset(anew, 0, (bx + 2) * (by + 2) * sizeof(double));
-
-    /* allocate communication buffers */
-    sbufnorth = (double *) malloc(bx * sizeof(double)); /* send buffers */
-    sbufsouth = (double *) malloc(bx * sizeof(double));
-    sbufeast = (double *) malloc(by * sizeof(double));
-    sbufwest = (double *) malloc(by * sizeof(double));
-    rbufnorth = (double *) malloc(bx * sizeof(double)); /* receive buffers */
-    rbufsouth = (double *) malloc(bx * sizeof(double));
-    rbufeast = (double *) malloc(by * sizeof(double));
-    rbufwest = (double *) malloc(by * sizeof(double));
-
-    memset(sbufnorth, 0, bx * sizeof(double));
-    memset(sbufsouth, 0, bx * sizeof(double));
-    memset(sbufeast, 0, by * sizeof(double));
-    memset(sbufwest, 0, by * sizeof(double));
-    memset(rbufnorth, 0, bx * sizeof(double));
-    memset(rbufsouth, 0, bx * sizeof(double));
-    memset(rbufeast, 0, by * sizeof(double));
-    memset(rbufwest, 0, by * sizeof(double));
-
-    (*aold_ptr) = aold;
-    (*anew_ptr) = anew;
-    (*sbufnorth_ptr) = sbufnorth;
-    (*sbufsouth_ptr) = sbufsouth;
-    (*sbufeast_ptr) = sbufeast;
-    (*sbufwest_ptr) = sbufwest;
-    (*rbufnorth_ptr) = rbufnorth;
-    (*rbufsouth_ptr) = rbufsouth;
-    (*rbufeast_ptr) = rbufeast;
-    (*rbufwest_ptr) = rbufwest;
-}
-
-void free_bufs(double *aold, double *anew,
-               double *sbufnorth, double *sbufsouth,
-               double *sbufeast, double *sbufwest,
-               double *rbufnorth, double *rbufsouth, double *rbufeast, double *rbufwest)
-{
-    free(aold);
-    free(anew);
-    free(sbufnorth);
-    free(sbufsouth);
-    free(sbufeast);
-    free(sbufwest);
-    free(rbufnorth);
-    free(rbufsouth);
-    free(rbufeast);
-    free(rbufwest);
-}
-
-void pack_data(int bx, int by, double *aold,
-               double *sbufnorth, double *sbufsouth, double *sbufeast, double *sbufwest)
-{
-    int i;
-    for (i = 0; i < bx; ++i)
-        sbufnorth[i] = aold[ind(i + 1, 1)];     /* #1 row */
-    for (i = 0; i < bx; ++i)
-        sbufsouth[i] = aold[ind(i + 1, by)];    /* #(by) row */
-    for (i = 0; i < by; ++i)
-        sbufeast[i] = aold[ind(bx, i + 1)];     /* #(bx) col */
-    for (i = 0; i < by; ++i)
-        sbufwest[i] = aold[ind(1, i + 1)];      /* #1 col */
-}
-
-void unpack_data(int bx, int by, double *aold,
-                 double *rbufnorth, double *rbufsouth, double *rbufeast, double *rbufwest)
-{
-    int i;
-    for (i = 0; i < bx; ++i)
-        aold[ind(i + 1, 0)] = rbufnorth[i];     /* #0 row */
-    for (i = 0; i < bx; ++i)
-        aold[ind(i + 1, by + 1)] = rbufsouth[i];        /* #(by+1) row */
-    for (i = 0; i < by; ++i)
-        aold[ind(bx + 1, i + 1)] = rbufeast[i]; /* #(bx+1) col */
-    for (i = 0; i < by; ++i)
-        aold[ind(0, i + 1)] = rbufwest[i];      /* #0 col */
-}
-
-void update_grid(int bx, int by, double *aold, double *anew, double *heat_ptr)
-{
-    int i, j;
-    double heat = 0.0;
-
-    for (i = 1; i < bx + 1; ++i) {
-        for (j = 1; j < by + 1; ++j) {
-            anew[ind(i, j)] =
-                anew[ind(i, j)] / 2.0 + (aold[ind(i - 1, j)] + aold[ind(i + 1, j)] +
-                                         aold[ind(i, j - 1)] + aold[ind(i, j + 1)]) / 4.0 / 2.0;
-            heat += anew[ind(i, j)];
-        }
-    }
-
-    (*heat_ptr) = heat;
 }
