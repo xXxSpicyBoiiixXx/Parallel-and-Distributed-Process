@@ -36,11 +36,11 @@
  * Function: Unused function according to compiler 
  */
 
-static int ind_f(int i, int j, int bx)
+/*static int ind_f(int i, int j, int bx)
 {
     return ind(i, j);
 }
-
+*/
 
 /* COME BACK TO CLEAN UP
  * Function setup, setting up the grid, energy to be injected, etc.
@@ -313,6 +313,7 @@ int main(int argc, char **argv)
         
         // NEED TO CHANGE THIS
         /* exchange data with neighbors */
+	/*
         MPI_Isend(sbufnorth, bx, MPI_DOUBLE, north, 9, MPI_COMM_WORLD, &reqs[0]);
         MPI_Isend(sbufsouth, bx, MPI_DOUBLE, south, 9, MPI_COMM_WORLD, &reqs[1]);
         MPI_Isend(sbufeast, by, MPI_DOUBLE, east, 9, MPI_COMM_WORLD, &reqs[2]);
@@ -324,8 +325,13 @@ int main(int argc, char **argv)
         MPI_Irecv(rbufwest, by, MPI_DOUBLE, west, 9, MPI_COMM_WORLD, &reqs[7]);
 
         MPI_Waitall(8, reqs, MPI_STATUSES_IGNORE);
-
-        /* unpack data */
+	*/
+	
+	MPI_Alltoallv(sbufnorth, bx, &reqs[0], MPI_DOUBLE, rbufnorth, bx, &reqs[4], MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Alltoallv(sbufsouth, bx, &reqs[1], MPI_DOUBLE, rbufsouth, bx, &reqs[5], MPI_DOUBLE, MPI_COMM_WORLD);
+	MPI_Alltoallv(sbufeast, by, &reqs[2], MPI_DOUBLE, rbufeast, by, &reqs[6], MPI_DOUBLE, MPI_COMM_WORLD);  
+	MPI_Alltoallv(sbufwest, by, &reqs[3], MPI_DOUBLE, rbufwest, by, &reqs[7], MPI_DOUBLE, MPI_COMM_WORLD);
+     
         unpack_data(bx, by, aold, rbufnorth, rbufsouth, rbufeast, rbufwest);
 
         /* update grid points */
