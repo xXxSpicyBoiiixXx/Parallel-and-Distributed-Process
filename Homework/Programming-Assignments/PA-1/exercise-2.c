@@ -1,8 +1,9 @@
 /*
  * FILE: exercise-2.c
- * USAGE:
- * DESCRIPTION:
- * OPTIONS:
+ * USAGE: mpirun -n <number of processes> ./exercise-2 <n> <energy> <niterations> <px> <py> 
+ * DESCRIPTION: This program is effecitively using the heat equation with 3 separate sources as inputs of heat
+to dispate over a certain given region. 
+ * OPTIONS: 
  * REQUIREMENTS: MPI interface
  * BUGS: N/A
  * AUTHOR: xXxSpicyBoiiixXx (Md Ali)
@@ -21,16 +22,6 @@
 
 /* row-major order */
 #define ind(i,j) ((j)*(bx+2)+(i))
-
-/*
- * Function: Unused function according to compiler 
- */
-
-/*static int ind_f(int i, int j, int bx)
-{
-    return ind(i, j);
-}
-*/
 
 /*
  * Function setup, setting up the grid, energy to be injected, etc.
@@ -53,7 +44,7 @@ static void setup(int rank, int proc, int argc, char **argv,
 
     if (argc < 6) {
         if (!rank)
-            printf("usage: stencil_mpi <n> <energy> <niters> <px> <py>\n");
+            printf("usage: mpirun -n <number of processors> %s <n> <energy> <niters> <px> <py>\n", argv[0]);
         (*final_flag) = 1;
         return;
     }
@@ -112,14 +103,12 @@ static void init_sources(int bx, int by, int offx, int offy, int n,
 /*
 * Function: alloc_bufs, allocates memory
 *
-* Input: int rank,
-*        int proc, process number
-*        int argc, argument count
-*        int arcv, argument values
-*        int *n_ptr, pointer toward n
-*        int *px_ptr, pointer towards px
-*        int *py_ptr, pointer towards py
-*        int *final_flag, pointer towards final flag
+* Input: int bx, for items in north or south
+*        int by, for items in east or west
+*        double **aold_ptr, old pointer array
+*        double **anew_ptr, new pointer array
+*        double **sbuf_ptr, send buffer pointer 
+*        double **rbuf_ptr, receive buffer pointer
 */
 static void alloc_bufs(int bx, int by, double **aold_ptr, double **anew_ptr,
                 double **sbuf_ptr, double **rbuf_ptr)
@@ -146,6 +135,14 @@ static void alloc_bufs(int bx, int by, double **aold_ptr, double **anew_ptr,
     (*rbuf_ptr) = rbuf;
 }
 
+/*
+ * Function: free_bufs, frees memory
+ *
+ * Input: double **aold_ptr, old pointer array
+ *        double **anew_ptr, new pointer array
+ *        double **sbuf_ptr, send buffer pointer 
+ *        double **rbuf_ptr, receive buffer pointer
+ */ 
 static void free_bufs(double *aold, double *anew, double *sbuf, double *rbuf)
 {
     free(aold);
@@ -154,6 +151,14 @@ static void free_bufs(double *aold, double *anew, double *sbuf, double *rbuf)
     free(rbuf);
 }
 
+ /*
+  * Function: pack_data, packs datat that needs to be sent
+  *
+  * Input: int bx, x coord
+  *	   int by, y coord 
+  *        double **aold_ptr, old pointer array
+  *        double **sbuf_ptr, send buffer pointer 
+  */ 
 static void pack_data(int bx, int by, double *aold, double *sbuf)
 {
     int i;
@@ -168,6 +173,15 @@ static void pack_data(int bx, int by, double *aold, double *sbuf)
 	    sbuf[2*by+bx+i] = aold[ind(i+1, by)]; 
 }
 
+
+ /*
+  * Function: unpack_data, unpacks data that is recieved 
+  *
+  * Input: int bx, x coord
+  *	   int by, y coord
+  *        double **aold_ptr, old pointer array
+  *        double **rbuf_ptr, receive buffer pointer
+  */ 
 static void unpack_data(int bx, int by, double *aold, double *rbuf)
 {
     int i;
@@ -182,6 +196,15 @@ static void unpack_data(int bx, int by, double *aold, double *rbuf)
 	    aold[ind(i+1, by+1)] = rbuf[2*by+bx+i];
 }
 
+ /*
+ * Function: update_grid, updates the heat grid for dispatation 
+ *
+ * Input: int bx, x coord
+ * 	  int by, y coord 
+ *        double **aold, old pointer array
+ *        double **anew, new pointer array
+ *        double **heat_ptr, heat pointer
+ */ 
 static void update_grid(int bx, int by, double *aold, double *anew, double *heat_ptr)
 {
     int i, j;
@@ -208,15 +231,12 @@ int main(int argc, char **argv)
     int north, south, west, east;
     int bx, by, offx, offy;
 
-    /* three heat sources */
     const int nsources = 3;
     int sources[nsources][2];
     int locnsources;
     int locsources[nsources][2];
 
-  //  double t1, t2;
-
-  //  int iter, i;
+    double startTime, endTime; ;
 
     double *sbuf;
     double *rbuf;
@@ -262,7 +282,8 @@ int main(int argc, char **argv)
     by = n / py;
     offx = rx * bx;
     offy = ry * by;
-
+	
+    startTime = MPI_Wtime(); 
 
     init_sources(bx, by, offx, offy, n, nsources, sources, &locnsources, locsources);
     alloc_bufs(bx, by, &aold, &anew, &sbuf, &rbuf);
@@ -285,12 +306,14 @@ int main(int argc, char **argv)
         tmp = anew;
         anew = aold;
         aold = tmp;
-   
-       free_bufs(aold, anew, sbuf, rbuf);	
+   	
+	endTime = MPI_Wtime(); 
 
+       free_bufs(aold, anew, sbuf, rbuf);	
+	
     MPI_Allreduce(&heat, &rheat, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     if (!rank)
-        printf("[%i] last heat: %f time: LATER\n", rank, rheat);
+        printf("[%i] last heat: %f time: %f\n", rank, rheat, endTime-startTime);
 
     MPI_Finalize();
     return 0;

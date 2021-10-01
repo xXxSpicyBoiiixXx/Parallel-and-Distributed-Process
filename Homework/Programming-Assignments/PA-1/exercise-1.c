@@ -219,12 +219,13 @@ static int* mergeSort(int height, int id, int localArray[], int size, MPI_Comm c
 }
 
 int main(int argc, char** argv) {
-    int numProcs, id, sharedArraySize, localArraySize, height;
-    int *localArray, *sharedArray;
+    int numProcs, id,height;
+    int *localArray, *sharedArray, sharedArraySize, localArraySize;;
     int length = -1;
+
     char myHostName[MPI_MAX_PROCESSOR_NAME];
     
-    double startTime;
+    double startTime, zeroStartTime, zeroTotalTime, processStartTime, processTotalTime, localTime, totalTime;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
