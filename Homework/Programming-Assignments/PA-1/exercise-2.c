@@ -12,16 +12,6 @@
  * REVISION: N/A
  */
 
-/*-----Original Description of program-----*/
-/*
- * 2D stencil code using a nonblocking send/receive with manual packing/unpacking.
- *
- * 2D regular grid is divided into px * py blocks of grid points (px * py = # of processes.)
- * In every iteration, each process calls nonblocking operations to exchange a halo with
- * neighbors. Grid points in a halo are packed and unpacked before and after communications.
- */
-/*---------------------------------------*/
-
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,16 +63,6 @@ static void setup(int rank, int proc, int argc, char **argv,
     niters = atoi(argv[3]);     /* number of iterations */
     px = atoi(argv[4]); /* 1st dim processes */
     py = atoi(argv[5]); /* 2nd dim processes */
-
-//    int args[3] = {n, energy, niters}; 
-//    MPI_Bcast(args, 3, MPI_INT, 0, comm);
-
-    if (px * py != proc)
-        MPI_Abort(MPI_COMM_WORLD, 1);   /* abort if px or py are wrong */
-    if (n % px != 0)
-        MPI_Abort(MPI_COMM_WORLD, 2);   /* abort px needs to divide n */
-    if (n % py != 0)
-        MPI_Abort(MPI_COMM_WORLD, 3);   /* abort py needs to divide n */
 
     (*n_ptr) = n;
     (*energy_ptr) = energy;
@@ -201,7 +181,7 @@ int main(int argc, char **argv)
     int n, energy, niters, px, py;
 
     int rx, ry;
-//    int north, south, west, east;
+    int north, south, west, east;
     int bx, by, offx, offy;
 
     /* three heat sources */
@@ -252,7 +232,7 @@ int main(int argc, char **argv)
 
     MPI_Cart_coords(topocomm, rank, 2, coords);
 	
-    int source, north, south, east, west; 
+    //int source, north, south, east, west; 
     MPI_Cart_shift(topocomm, 0, 1, &west, &east); 
     MPI_Cart_shift(topocomm, 1, 1, &north, &south);
 
