@@ -243,8 +243,8 @@ int main(int argc, char **argv)
     pdims[1] = py;
 
     int periods[2] = {0,0};
-    MPI_Comm topocomm;
-    MPI_Cart_create(MPI_COMM_WORLD, 2, pdims, periods, 0, &topocomm);
+    MPI_Comm topComm;
+    MPI_Cart_create(MPI_COMM_WORLD, 2, pdims, periods, 0, &topComm);
     
     int coords[2]; 
     rx = rank % px;
@@ -252,11 +252,11 @@ int main(int argc, char **argv)
     coords[0] = rx; 
     coords[1] = ry; 
 
-    MPI_Cart_coords(topocomm, rank, 2, coords);
+    MPI_Cart_coords(topComm, rank, 2, coords);
 	
 
-    MPI_Cart_shift(topocomm, 0, 1, &west, &east); 
-    MPI_Cart_shift(topocomm, 1, 1, &north, &south);
+    MPI_Cart_shift(topComm, 0, 1, &west, &east); 
+    MPI_Cart_shift(topComm, 1, 1, &north, &south);
 
     bx = n / px;
     by = n / py;
@@ -276,7 +276,7 @@ int main(int argc, char **argv)
         	
 	int counts[4] = {by, by, bx, bx};
 	int displs[4] = {0, by, 2*by, 2*by+bx};
-	MPI_Alltoallv(sbuf,counts, displs, MPI_DOUBLE, rbuf, counts, displs, MPI_DOUBLE, topocomm);
+	MPI_Alltoallv(sbuf,counts, displs, MPI_DOUBLE, rbuf, counts, displs, MPI_DOUBLE, topComm);
 
         unpack_data(bx, by, aold, rbuf);
 
