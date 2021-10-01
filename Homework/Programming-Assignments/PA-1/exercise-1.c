@@ -191,11 +191,9 @@ static int* mergeSort(int height, int id, int localArray[], int size, MPI_Comm c
         if (parent == id) {
 		    rightChild = (id | (1 << myHeight));
 
-  		    
   		    half2 = (int*) malloc (size * sizeof(int));
   		    MPI_Recv(half2, size, MPI_INT, rightChild, 0,
 				MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
   		    
   		    mergeResult = (int*) malloc (size * 2 * sizeof(int));
   		    mergeResult = merge(half1, half2, mergeResult, size);
@@ -225,10 +223,13 @@ int main(int argc, char** argv) {
     int *localArray, *sharedArray;
     int length = -1;
     char myHostName[MPI_MAX_PROCESSOR_NAME];
+    
+    double startTime;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
     MPI_Comm_rank(MPI_COMM_WORLD, &id);
+    startTime = MPI_Wtime();
 
     MPI_Get_processor_name (myHostName, &length); 
 
@@ -247,18 +248,28 @@ int main(int argc, char** argv) {
 	
     localArraySize = sharedArraySize / numProcs;
     localArray = (int*) malloc (localArraySize * sizeof(int));
-    MPI_Scatter(sharedArray, localArraySize, MPI_INT, localArray,
-		localArraySize, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(sharedArray, localArraySize, MPI_INT, localArray, localArraySize, MPI_INT, 0, MPI_COMM_WORLD);
     
     if (id == 0) {
+        zeroStartTime = MPI_Wtime();
 		sharedArray = mergeSort(height, id, localArray, localArraySize, MPI_COMM_WORLD, sharedArray);
+        zeroTotalTime = MPI_Wtime() - zeroStartTime;
+        printf("Process #%d of %d on %s took %f seconds \n", id, numProcs, myHostName, zeroTotalTime);
 	}
 	else {
+            processStartTime = MPI_Wtime();
 	        mergeSort(height, id, localArray, localArraySize, MPI_COMM_WORLD, NULL);
+            processTotalTime = MPI_Wtime() - processStartTime;
+            printf("Process #%d of %d of %s took %f seconds \n", id, numProcs, myHostName, processTotalTime);
 	}
 
+    localTime = MPI_Wtime() - startTime;
+    
+    MPI_Reduce(&localTime, &totalTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    
     if (id == 0) {
 		printArray("FINAL SORTED ARRAY:", sharedArray, sharedArraySize);
+        printf("Sorting %d integers took %f seconds \n", sharedArraySize, totalTime);
 		free(sharedArray);
 	}
 

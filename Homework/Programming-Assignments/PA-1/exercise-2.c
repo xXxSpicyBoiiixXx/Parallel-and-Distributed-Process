@@ -32,17 +32,17 @@
 }
 */
 
-/* COME BACK TO CLEAN UP
+/*
  * Function setup, setting up the grid, energy to be injected, etc.
  *
- * Input: int rank, ????
+ * Input: int rank, rank number
  *        int proc, process number
  *        int argc, argument count
  *        int arcv, argument values
  *        int *n_ptr, pointer toward n
  *        int *px_ptr, pointer towards px
  *        int *py_ptr, pointer towards py
- *        int *final_flag, pointer towards final flag???? why
+ *        int *final_flag, pointer towards final flag
  */
 static void setup(int rank, int proc, int argc, char **argv,
            int *n_ptr, int *energy_ptr, int *niters_ptr, int *px_ptr, int *py_ptr, int *final_flag)
@@ -58,11 +58,11 @@ static void setup(int rank, int proc, int argc, char **argv,
         return;
     }
 
-    n = atoi(argv[1]);  /* nxn grid */
-    energy = atoi(argv[2]);     /* energy to be injected per iteration */
-    niters = atoi(argv[3]);     /* number of iterations */
-    px = atoi(argv[4]); /* 1st dim processes */
-    py = atoi(argv[5]); /* 2nd dim processes */
+    n = atoi(argv[1]);
+    energy = atoi(argv[2]);
+    niters = atoi(argv[3]);
+    px = atoi(argv[4]);
+    py = atoi(argv[5]);
 
     (*n_ptr) = n;
     (*energy_ptr) = energy;
@@ -71,6 +71,19 @@ static void setup(int rank, int proc, int argc, char **argv,
     (*py_ptr) = py;
 }
 
+/*
+* Function init_souruces, initalizes 3 sources from the main file.
+*
+* Input: int bx, x position
+*        int by, y position
+*        int offx, offset of x
+*        int offy, offset of y
+*        int n, number on the grid
+*        int nsources, number of sources
+*        int sources[][2], starts on second column
+*        int *locnsources_ptr, pointer for sources
+*        int locsouces[][2], source location
+*/
 static void init_sources(int bx, int by, int offx, int offy, int n,
                   const int nsources, int sources[][2], int *locnsources_ptr, int locsources[][2])
 {
@@ -96,6 +109,18 @@ static void init_sources(int bx, int by, int offx, int offy, int n,
     (*locnsources_ptr) = locnsources;
 }
 
+/*
+* Function: alloc_bufs, allocates memory
+*
+* Input: int rank,
+*        int proc, process number
+*        int argc, argument count
+*        int arcv, argument values
+*        int *n_ptr, pointer toward n
+*        int *px_ptr, pointer towards px
+*        int *py_ptr, pointer towards py
+*        int *final_flag, pointer towards final flag
+*/
 static void alloc_bufs(int bx, int by, double **aold_ptr, double **anew_ptr,
                 double **sbuf_ptr, double **rbuf_ptr)
 {
@@ -103,9 +128,8 @@ static void alloc_bufs(int bx, int by, double **aold_ptr, double **anew_ptr,
     double *sbuf;
     double *rbuf;
 
-    /* allocate two working arrays */
-    anew = (double *) malloc((bx + 2) * (by + 2) * sizeof(double));     /* 1-wide halo zones! */
-    aold = (double *) malloc((bx + 2) * (by + 2) * sizeof(double));     /* 1-wide halo zones! */
+    anew = (double *) malloc((bx + 2) * (by + 2) * sizeof(double));
+    aold = (double *) malloc((bx + 2) * (by + 2) * sizeof(double));
 
     memset(aold, 0, (bx + 2) * (by + 2) * sizeof(double));
     memset(anew, 0, (bx + 2) * (by + 2) * sizeof(double));
@@ -187,8 +211,8 @@ int main(int argc, char **argv)
     /* three heat sources */
     const int nsources = 3;
     int sources[nsources][2];
-    int locnsources;            /* number of sources in my area */
-    int locsources[nsources][2];        /* sources local to my rank */
+    int locnsources;
+    int locsources[nsources][2];
 
   //  double t1, t2;
 
@@ -201,13 +225,11 @@ int main(int argc, char **argv)
     double heat, rheat;
 
     int final_flag;
-
-    /* initialize MPI envrionment */
+    
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    /* argument checking and setting */
     setup(rank, size, argc, argv, &n, &energy, &niters, &px, &py, &final_flag);
 
     if (final_flag == 1) {
@@ -222,8 +244,8 @@ int main(int argc, char **argv)
 
     int periods[2] = {0,0};
     MPI_Comm topocomm;
-    MPI_Cart_create(MPI_COMM_WORLD, 2, pdims, periods, 0, &topocomm); 
-    /* determine my coordinates (x,y) -- rank=x*a+y in the 2d processor array */
+    MPI_Cart_create(MPI_COMM_WORLD, 2, pdims, periods, 0, &topocomm);
+    
     int coords[2]; 
     rx = rank % px;
     ry = rank / px;
@@ -232,28 +254,24 @@ int main(int argc, char **argv)
 
     MPI_Cart_coords(topocomm, rank, 2, coords);
 	
-    //int source, north, south, east, west; 
+
     MPI_Cart_shift(topocomm, 0, 1, &west, &east); 
     MPI_Cart_shift(topocomm, 1, 1, &north, &south);
 
-    /* decompose the domain */
-    bx = n / px;        /* block size in x */
-    by = n / py;        /* block size in y */
-    offx = rx * bx;     /* offset in x */
-    offy = ry * by;     /* offset in y */
+    bx = n / px;
+    by = n / py;
+    offx = rx * bx;
+    offy = ry * by;
 
-    /* initialize three heat sources */
+
     init_sources(bx, by, offx, offy, n, nsources, sources, &locnsources, locsources);
-	
-    /* allocate working arrays & communication buffers */
     alloc_bufs(bx, by, &aold, &anew, &sbuf, &rbuf);
 
-        /* refresh heat sources */
-        for (int i = 0; i < locnsources; ++i) {
-            aold[ind(locsources[i][0], locsources[i][1])] += energy;    /* heat source */
-        }
 
-        /* pack data */
+        for (int i = 0; i < locnsources; ++i) {
+            aold[ind(locsources[i][0], locsources[i][1])] += energy;
+        }
+    
         pack_data(bx, by, aold, sbuf);
         	
 	int counts[4] = {by, by, bx, bx};
@@ -262,18 +280,14 @@ int main(int argc, char **argv)
 
         unpack_data(bx, by, aold, rbuf);
 
-        /* update grid points */
         update_grid(bx, by, aold, anew, &heat);
 
-        /* swap working arrays */
         tmp = anew;
         anew = aold;
         aold = tmp;
    
        free_bufs(aold, anew, sbuf, rbuf);	
 
-
-    /* get final heat in the system */
     MPI_Allreduce(&heat, &rheat, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     if (!rank)
         printf("[%i] last heat: %f time: LATER\n", rank, rheat);
