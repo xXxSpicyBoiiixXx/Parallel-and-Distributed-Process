@@ -1,5 +1,5 @@
 MPICC=mpicc
-CFLAGS=-std=c99
+CFLAGS=-std=c99 -lm
 OBJS=printarr_par.o
 BINS=stencil stencil_blocked stencil_mpi stencil_mpi_ddt stencil_mpi_ddt_overlap stencil_mpi_ddt_overlap_carttopo \
 stencil_mpi_ddt_overlap_carttopo_neighcolls \
