@@ -12,7 +12,7 @@ void decomposeSerial(double **A, long n) {
 		}
 		
 		for(long k = i + 1; k < n; k++) { 
-			for(j = i + 1; j < n; j++) { 
+			for(long j = i + 1; j < n; j++) { 
 				A[k][j] = A[k][j] - A[k][i] * A[i][j]; 
 			}
 		}
@@ -117,7 +117,7 @@ double **make2dmatrix(long n) {
 	
 	m = (double**)malloc(n*sizeof(double*)); 
 
-	for(i = 0; i < n i++) { 
+	for(i = 0; i < n; i++) { 
 		m[i] = (double*)malloc(n*sizeof(double)); 
 	}		
 	return m;

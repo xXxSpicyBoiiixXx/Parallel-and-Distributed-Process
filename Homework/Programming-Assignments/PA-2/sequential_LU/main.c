@@ -25,13 +25,13 @@ int main(int argc, char *argv[]) {
 	
 	printMatrix(matrix, matrix_size); 
 	
-	begin = clock(); 
+	start = clock(); 
 		
-	docomposeSerial(matrix, matrix_size);
+	decomposeSerial(matrix, matrix_size);
 	
 	end = clock(); 
 	
-	time_spent = ((double)(end - start)) 
+	time_spent = ((double)(end - start)); 
 
 	printMatrix(matrix, matrix_size); 
 	
