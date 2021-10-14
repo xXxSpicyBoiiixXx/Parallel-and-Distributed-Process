@@ -1,6 +1,7 @@
 #include<stdio.h> 
 #include <stdlib.h> 
 #include <omp.h> 
+#include "openmp.h"
 
 void decomposeOpenMP(double **A, long n) { 
 	
