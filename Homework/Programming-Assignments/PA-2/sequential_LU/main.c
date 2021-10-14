@@ -4,7 +4,7 @@
 #include "sequential.h"
 
 long matrix_size; 
-long version; 
+long variation; 
 
 int main(int argc, char *argv[]) { 
 	
@@ -13,18 +13,18 @@ int main(int argc, char *argv[]) {
 	
 	if(argc != 3) { 
 	
-		printf("Enter the size of the matrix (N x N) wehre N = "); 
+		printf("Enter the size of the matrix (N x N) where N = "); 
 		scanf("%lu", &matrix_size); 
 
-		printf("Enter the version number V = "); 
-		scanf("%lu", &version); 
+		printf("Enter the variation number = "); 
+		scanf("%lu", &variation); 
 	} else { 
 		
 		matrix_size = atol(argv[1]); 
-		version = atol(argv[2]); 
+		variation = atol(argv[2]); 
 	}
 
-	double **matrix = getMatrix(matrix_size, version); 
+	double **matrix = getMatrix(matrix_size, variation); 
 	
 	printMatrix(matrix, matrix_size); 
 	
@@ -34,13 +34,13 @@ int main(int argc, char *argv[]) {
 	
 	end = clock(); 
 	
-	time_spent = ((double)(end - start)); 
+	time_spent = ((double)(end - start)) / CLOCKS_PER_SEC; 
 
 	printMatrix(matrix, matrix_size);
 	printf("\n");
 	printf("Size of Matrix :%lu \n", matrix_size);
-	printf("Loop Version Number : %lu\n", version);
-	printf("%s",checkSum(matrix, matrix_size, version)==1? "Decomposition successful... \n":"Decomposition failed...\n");
+	printf("Loop Variation Number : %lu\n", variation);
+	printf("%s",checkSum(matrix, matrix_size, variation)==1? "Decomposition successful... \n":"Decomposition failed...\n");
 	printf("Computation Time: %f seconds\n", time_spent);
 
 	free2dmatrix(matrix, matrix_size); 

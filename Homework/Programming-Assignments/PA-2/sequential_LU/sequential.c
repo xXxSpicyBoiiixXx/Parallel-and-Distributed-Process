@@ -4,7 +4,7 @@
 
 void decomposeSerial(double **A, long n) { 
 		
-	printf("Decomposition sequentially") ;
+	printf("Decomposition sequentially\n") ;
 	
 	for(long i = 0; i < n; i++) { 
 		for(long j = i + 1; j < n; j++) { 
@@ -32,7 +32,7 @@ int checkError1(double **A, long n) {
 }
 
 
-void initializeVersion1(double **A, long n) {
+void initializeLoop1(double **A, long n) {
 	
 	for(long i = 0; i < n; i++) { 
 		for(long j = 0; j < n; j++) {
@@ -62,7 +62,7 @@ int checkError2(double **A, long n) {
 	return 1;
 }
 
-void initializeVersion2(double **A, long n) { 
+void initializeLoop2(double **A, long n) { 
 	
 	long i, j, k;
 	for(i = 0; i < n; i++) { 
@@ -78,34 +78,34 @@ void initializeVersion2(double **A, long n) {
 	}	
 }
 
-double **getMatrix(long size, long version) { 
+double **getMatrix(long size, long loop) { 
 	
 	double **m = make2dmatrix(size); 
 	
-	switch(version) { 
+	switch(loop) { 
 	case 1: 
-		initializeVersion1(m, size);
+		initializeLoop1(m, size);
 		break; 
 	case 2: 
-		initializeVersion2(m, size); 
+		initializeLoop2(m, size); 
 		break;
 	default: 
-		printf("Please enter either 1 or 2 for the version number"); 
+		printf("Please enter either 1 or 2 for the loop varition..."); 
 		exit(0); 
 	}
 	return m;
 }
 
-int checkSum(double **A, long size, long version) { 
+int checkSum(double **A, long size, long loop) { 
 	
-	switch(version) { 
+	switch(loop) { 
 	case 1: 
 		return checkError1(A, size); 
 		break; 
 	case 2: 
 		return checkError2(A, size); 
 	default: 
-		printf("Invalid version character in the check"); 
+		printf("Invalid loop character in the check"); 
 		exit(0); 
 	}
 }
