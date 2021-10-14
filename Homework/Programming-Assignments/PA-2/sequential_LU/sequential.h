@@ -12,6 +12,6 @@ void decomposeSerial(double **A, long n);
 void initializeVersion1(double **A, long n); 
 void initializeVersion2(double **A, long n); 
 void free2dmatrix(double **A, long n); 
-
+void printMatrix(double **A, long n);
 
 #endif 

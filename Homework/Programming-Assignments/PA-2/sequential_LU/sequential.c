@@ -3,10 +3,10 @@
 #include "sequential.h"
 
 void decomposeSerial(double **A, long n) { 
+		
+	printf("Decomposition sequentially") ;
 	
-	printf("Decomposition sequentially called upon") ;
-	
-	for(long i; i < n; i++) { 
+	for(long i = 0; i < n; i++) { 
 		for(long j = i + 1; j < n; j++) { 
 			A[i][j] = A[i][j]/A[i][i];
 		}

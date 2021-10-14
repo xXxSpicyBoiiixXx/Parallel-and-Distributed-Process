@@ -3,6 +3,9 @@
 #include <time.h> 
 #include "sequential.h"
 
+long matrix_size; 
+long version; 
+
 int main(int argc, char *argv[]) { 
 	
 	clock_t start, end; 
@@ -33,8 +36,12 @@ int main(int argc, char *argv[]) {
 	
 	time_spent = ((double)(end - start)); 
 
-	printMatrix(matrix, matrix_size); 
-	
+	printMatrix(matrix, matrix_size);
+	printf("\n");
+	printf("Size of Matrix :%lu \n", matrix_size);
+	printf("Loop Version Number : %lu\n", version);
+	printf("%s",checkSum(matrix, matrix_size, version)==1? "Decomposition successful... \n":"Decomposition failed...\n");
+	printf("Computation Time: %f seconds\n", time_spent);
 
 	free2dmatrix(matrix, matrix_size); 
 	
