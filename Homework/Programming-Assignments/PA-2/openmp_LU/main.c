@@ -133,10 +133,11 @@ void initializeLoop2(double **A,long n){
 }
 
 
-double **getMatrix(long size,long variation)
+double **getMatrix(long size,long loop)
 {
 	double **m=make2dmatrix(size);
-	switch(variation){
+    
+	switch(loop){
 	case 1:
 		initializeLoop1(m,size);
 		break;
@@ -192,7 +193,7 @@ int main(int argc, char *argv[]){
     
 	omp_set_num_threads(num_threads);
 
-	double **matrix=getMatrix(matrix_size,version);
+	double **matrix=getMatrix(matrix_size, variation);
 
 	printMatrix(matrix,matrix_size);
 
