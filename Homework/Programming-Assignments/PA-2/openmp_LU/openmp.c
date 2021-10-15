@@ -52,21 +52,23 @@ void decomposeOpenMP(double **A, long n) {
 }
 
 int checkError1(double **A, long n) { 
-	
-	for(long i = 0; i < n; i++) { 
-		for(long j = 0; j < n; j++) { 
-			if(i <= j) { 
-				A[i][j] = i + 1; 
-			} else { 
-				A[i][j] = j + 1;
-			}
+	long i,j;
+	for(i = 0; i < n; i++) { 
+		for(j = 0; j < n; j++) {
+		       if(A[i][j] != 1) {
+				return 0;
+			}	       
 		}	
 	}
+
+return 1;
 }
 
 void initializeLoop1(double **A, long n) {
-	for(long i = 0; i < n; i++) { 
-		for(long j = 0; j < n; j++) { 
+
+	long i, j;
+	for(i = 0; i < n; i++) { 
+		for(j = 0; j < n; j++) { 
 			if(i <= j) { 
 				A[i][j] = i + 1;
 			} else { 
@@ -77,13 +79,13 @@ void initializeLoop1(double **A, long n) {
 }
 
 int checkError2(double **A, long n) { 
-	
-	for(long i = 0; i < n; i++) { 
+	long i, j;	
+	for(i = 0; i < n; i++) { 
 		if(A[i][i] != 1) {
 			return 0;
 		}
 
-		for(long j = 0; j < n; j++) {
+		for(j = 0; j < n; j++) {
 			if(i != j && A[i][j] != 2) {
 				return 0;
 			}
@@ -154,7 +156,7 @@ double **make2dmatrix(long n) {
 
 	return m;
 }
-
+/*
 void printMatrix(double **A, long n) {
 	for(long i = 0; i < n; i++) { 
 		for(long j = 0; j < n; j++) { 
@@ -162,7 +164,7 @@ void printMatrix(double **A, long n) {
 		}
 		printf("\n");
 	}
-}
+}*/
 
 void free2dmatrix(double ** A, long n) {
 	if(!A) {
