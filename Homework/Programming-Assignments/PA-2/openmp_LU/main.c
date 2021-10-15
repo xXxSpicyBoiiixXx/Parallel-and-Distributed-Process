@@ -1,5 +1,5 @@
 /*
- * 
+ *
  */
 
 #include <stdio.h>
@@ -136,7 +136,7 @@ void initializeLoop2(double **A,long n){
 double **getMatrix(long size,long variation)
 {
 	double **m=make2dmatrix(size);
-	switch(version){
+	switch(variation){
 	case 1:
 		initializeLoop1(m,size);
 		break;
@@ -182,7 +182,7 @@ int main(int argc, char *argv[]){
 	}
 	else{
 		matrix_size=atol(argv[1]);
-		version=atol(argv[2]);
+		variation=atol(argv[2]);
         num_threads = atol(argv[3]);
 	}
 
