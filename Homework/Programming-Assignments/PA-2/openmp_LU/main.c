@@ -1,26 +1,25 @@
-#include<stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
 #include <time.h>
 
 double **make2dmatrix(long n);
-<<<<<<< HEAD
 void free2dmatrix(double ** M, long n);
-void printmatrix(double **A, long n);
+void printMatrix(double **A, long n);
 
-long matrix_size,version;
+long matrix_size;
+long variation;
 
 void decomposeOpenMP(double **A, long n)
 {
-	printf("\nDECOMPOSE OPENMP CALLED\n");
+	printf("Decompose OpenMP\n");
 
-	long i,j,k,rows,mymin,mymax;
+	long i, j, k, rows,min,max;
 	int pid=0;
 	int nprocs;
 
-#pragma omp parallel shared(A,n,nprocs) private(i,j,k,pid,rows,mymin,mymax)
-	{
-=======
+#pragma omp parallel shared(A,n,nprocs) private(i,j,k,pid,rows,min,max)
+{
 double **getMatrix(long size, long loop); 
 
 long matrix_size; 
@@ -38,35 +37,29 @@ void decomposeOpenMP(double **A, long n) {
 
 #pragma omp parallel shared(A, n, nprocs) private(i, j, k, rows, pid, min, max)
         {
->>>>>>> 068b4151f4ee69cdc401643903e7f4f1aa39fc9c
 #ifdef _OPENMP
-		nprocs=omp_get_num_threads();
+		nprocs = omp_get_num_threads();
 #endif
 
 #ifdef _OPENMP
-		pid=omp_get_thread_num();
+		pid = omp_get_thread_num();
 #endif
+		rows = n/nprocs;
+		min = pid * rows;
+		max = min + rows - 1;
 
-	//	printf("1. I am proc no %d out of %d\n",pid,nprocs);
-
-		rows=n/nprocs;
-		mymin=pid * rows;
-		mymax=mymin + rows - 1;
-
-		if(pid==nprocs-1 && (n-(mymax+1))>0)
-			mymax=n-1;
+		if(pid==nprocs-1 && (n-(max+1))>0)
+			max=n-1;
 
 		for(k=0;k<n;k++){
-			if(k>=mymin && k<=mymax){
-				//#pragma omp for schedule(static)
+			if(k>=min && k<=max){
 				for(j=k+1;j<n;j++){
 					A[k][j] = A[k][j]/A[k][k];
 				}
 			}
 
 #pragma omp barrier
-			for(i=(((k+1) > mymin) ? (k+1) : mymin);i<=mymax;i++){
-				//#pragma omp for schedule(static)
+			for(i=(((k+1) > min) ? (k+1) : min);i<=max;i++){
 				for(j=k+1;j<n;j++){
 					A[i][j] = A[i][j] - A[i][k] * A[k][j];
 				}
@@ -75,7 +68,7 @@ void decomposeOpenMP(double **A, long n) {
 	}
 }
 
-int checkVersion1(double **A, long n)
+int checkError1(double **A, long n)
 {
 	long i, j;
 	for (i=0;i<n;i++)
@@ -88,7 +81,7 @@ int checkVersion1(double **A, long n)
 	return 1;
 }
 
-void initializeVersion1(double **A, long n)
+void initializeLoop1(double **A, long n)
 {
 	long i, j;
 	for (i=0;i<n;i++){
@@ -103,7 +96,7 @@ void initializeVersion1(double **A, long n)
 }
 
 
-int checkVersion2(double **A, long n)
+int checkError2(double **A, long n)
 {
 	long i,j;
 	for(i=0;i<n;i++){
@@ -119,7 +112,7 @@ int checkVersion2(double **A, long n)
 	return 1;
 }
 
-void initializeVersion2(double **A,long n){
+void initializeLoop2(double **A,long n){
 	long i,j, k;
 	for(i=0;i<n;i++){
 		for(j=i;j<n;j++){
@@ -147,72 +140,73 @@ double **getMatrix(long size,long version)
 		initializeVersion2(m,size);
 		break;
 	default:
-		printf("INVALID VERSION NUMBER");
+		printf("Please eneter either 1 or 2 for the loop variation...");
 		exit(0);
 	}
 	return m;
 }
 
-int check(double **A, long size, long version){
-	switch(version){
+int checkSum(double **A, long size, long loop){
+	switch(loop){
 	case 1:
-		return checkVersion1(A,size);
+		return checkError1(A,size);
 		break;
 	case 2:
-		return checkVersion2(A,size);
+		return checkError2(A,size);
 		break;
 	default:
-		printf("INVALID VERSION CHARACTER IN CHECK");
+		printf("Invalid loop character in the cehck");
 		exit(0);
 	}
 }
 
 int main(int argc, char *argv[]){
-
+    
+    clock_t start, end;
+    double time_spent;
+    long num_threads;
+    
 	if(argc !=4){
 		printf("Enter the size of matrix (N x N) where N = ");
 		scanf("%lu",&matrix_size);
 
-		printf("Enter the version number V = ");
+		printf("Enter the variation number = ");
 		scanf("%lu",&version);
+        
+        printf("Enter the number of threads");
+        scanf("%lu",&num_threads);
 	}
 	else{
 		matrix_size=atol(argv[1]);
 		version=atol(argv[2]);
+        num_threads = atol(argv[3]);
 	}
-	long num_threads=atol(argv[3]);
+
 	if(num_threads<1){
 		num_threads=5;
 	}
+    
 	omp_set_num_threads(num_threads);
 
 	double **matrix=getMatrix(matrix_size,version);
 
-	//printmatrix(matrix,matrix_size);
+	printMatrix(matrix,matrix_size);
 
-	/**
-	 * Code to Time the LU decompose
-	 */
-	clock_t begin, end;
-	double time_spent;
-	begin = clock();
+	start = clock();
 
 	decomposeOpenMP(matrix,matrix_size);
 
 	end = clock();
-	time_spent = ((double)(end - begin)) / CLOCKS_PER_SEC;
+    
+	time_spent = ((double)(end - start)) / CLOCKS_PER_SEC;
 
-	//printmatrix(matrix,matrix_size);
-
-
-	printf("\n**********************************\n\n");
-	printf("Algo selected :%s\n","OpenMP");
+	printMatrix(matrix,matrix_size);
+    printf("\n");
 	printf("Size of Matrix :%lu \n",matrix_size);
-	printf("Version Number : %lu\n",version);
+	printf("Loop Variation Number : %lu\n",variation);
 	printf("Number of Procs : %lu\n",num_threads);
-	printf("%s",check(matrix,matrix_size,version)==1? "DECOMPOSE SUCCESSFULL\n":"DECOMPOSE FAIL\n");
-	printf("DECOMPOSE TIME TAKEN : %f seconds\n",time_spent);
-	printf("\n**********************************\n\n");
+	printf("%s",checkSum(matrix,matrix_size,variation)==1? "Decomposition successful... \n":"Decomposition failed... \n");
+	printf("Computation Time : %f seconds\n",time_spent);
 
 	free2dmatrix(matrix,matrix_size);
 	return 0;
@@ -230,7 +224,7 @@ double **make2dmatrix(long n)
 }
 
 // only works for dynamic arrays:
-void printmatrix(double **A, long n)
+void printMatrix(double **A, long n)
 {
 	printf("\n *************** MATRIX ****************\n\n");
 	long i, j;
@@ -263,7 +257,7 @@ int main(int argc, char *argv[]) {
 		printf("Enter the size of the matrix (N x N) where N = "); 
 		scanf("%lu", &matrix_size); 
 
-		printf("Enter the variation number = "); 
+		printf("Enter the version number = ");
 		scanf("%lu", &variation); 
 	} else { 
 		matrix_size = atol(argv[1]); 
@@ -290,7 +284,7 @@ int main(int argc, char *argv[]) {
 
 	time_spent = ((double)(end - start)) / CLOCKS_PER_SEC; 
 
-	printMatrix(matrix, matrix_size); 
+	printMatrix(matrix, matrix_size);
 	printf("\n"); 
 	printf("Size of Matrix :%lu \n", matrix_size);
 	printf("Loop Variation Number : %lu\n", variation);
