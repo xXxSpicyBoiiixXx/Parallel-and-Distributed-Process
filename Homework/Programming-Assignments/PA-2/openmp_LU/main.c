@@ -14,21 +14,6 @@ void printMatrix(double **A, long n);
 long matrix_size;
 long variation;
 
-void decomposeOpenMP(double **A, long n)
-{
-	printf("Decompose OpenMP\n");
-
-	long i, j, k, rows,min,max;
-	int pid=0;
-	int nprocs;
-
-#pragma omp parallel shared(A,n,nprocs) private(i,j,k,pid,rows,min,max)
-{
-double **getMatrix(long size, long loop); 
-
-long matrix_size; 
-long variation;
-
 void decomposeOpenMP(double **A, long n) {
     
         int nprocs;
@@ -133,11 +118,11 @@ void initializeLoop2(double **A,long n){
 }
 
 
-double **getMatrix(long size,long loop)
+double **getMatrix(long size,long variation)
 {
 	double **m=make2dmatrix(size);
     
-	switch(loop){
+	switch(variation){
 	case 1:
 		initializeLoop1(m,size);
 		break;
@@ -247,3 +232,4 @@ void free2dmatrix(double ** A, long n)
 		free(A[i]);
 	free(A);
 }
+
