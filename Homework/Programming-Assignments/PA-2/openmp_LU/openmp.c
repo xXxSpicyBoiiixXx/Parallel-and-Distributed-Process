@@ -146,17 +146,18 @@ int checkSum(double **A, long size, long loop) {
 }
 
 double **make2dmatrix(long n) { 
-
+	
+	long i;
 	double **m;
 	m = (double**)malloc(n*sizeof(double*));
 
-	for(long i = 0; i < n; i++) { 
+	for(i = 0; i < n; i++) { 
 		m[i] = (double*)malloc(n*sizeof(double)); 
 	}
 
 	return m;
 }
-/*
+
 void printMatrix(double **A, long n) {
 	for(long i = 0; i < n; i++) { 
 		for(long j = 0; j < n; j++) { 
@@ -164,7 +165,7 @@ void printMatrix(double **A, long n) {
 		}
 		printf("\n");
 	}
-}*/
+}
 
 void free2dmatrix(double ** A, long n) {
 	if(!A) {

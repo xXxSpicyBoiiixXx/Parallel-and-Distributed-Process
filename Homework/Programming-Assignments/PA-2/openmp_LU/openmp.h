@@ -12,7 +12,7 @@ double **make2dmatrix(long n);
 
 void initializeLoop1(double **A, long n); 
 void initializeLoop2(double **A, long n); 
-//void printMatrix(double **A, long n); 
+void printMatrix(double **A, long n); 
 void free2dmatrix(double **A, long n);
 
 
