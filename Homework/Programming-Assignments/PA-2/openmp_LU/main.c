@@ -4,6 +4,7 @@
 #include <time.h>
 
 double **make2dmatrix(long n);
+<<<<<<< HEAD
 void free2dmatrix(double ** M, long n);
 void printmatrix(double **A, long n);
 
@@ -19,6 +20,25 @@ void decomposeOpenMP(double **A, long n)
 
 #pragma omp parallel shared(A,n,nprocs) private(i,j,k,pid,rows,mymin,mymax)
 	{
+=======
+double **getMatrix(long size, long loop); 
+
+long matrix_size; 
+long variation;
+
+void decomposeOpenMP(double **A, long n) {
+    
+        int nprocs;
+        int pid = 0;
+        
+        long i, j, k;
+        long rows, min, max;
+
+        printf("Decomposition OpenMP\n");
+
+#pragma omp parallel shared(A, n, nprocs) private(i, j, k, rows, pid, min, max)
+        {
+>>>>>>> 068b4151f4ee69cdc401643903e7f4f1aa39fc9c
 #ifdef _OPENMP
 		nprocs=omp_get_num_threads();
 #endif
@@ -222,6 +242,7 @@ void printmatrix(double **A, long n)
 	}
 }
 
+<<<<<<< HEAD
 void free2dmatrix(double ** M, long n)
 {
 	long i;
@@ -229,4 +250,56 @@ void free2dmatrix(double ** M, long n)
 	for(i=0;i<n;i++)
 		free(M[i]);
 	free(M);
+=======
+
+
+int main(int argc, char *argv[]) { 
+	
+	clock_t start, end;
+	double time_spent; 
+	double **matrix;
+
+	if(argc != 4) { 
+		printf("Enter the size of the matrix (N x N) where N = "); 
+		scanf("%lu", &matrix_size); 
+
+		printf("Enter the variation number = "); 
+		scanf("%lu", &variation); 
+	} else { 
+		matrix_size = atol(argv[1]); 
+		variation = atol(argv[2]); 
+	}
+
+	//long num_threads = atol(argv[3]); 
+	/*
+	if(num_threads < 1) { 
+		num_threads = 5;
+	}*/
+
+	omp_set_num_threads(2); 
+
+	matrix = getMatrix(matrix_size, variation); 
+
+	printMatrix(matrix, matrix_size);
+
+	start = clock(); 
+	
+	decomposeOpenMP(matrix, matrix_size); 
+
+	end = clock(); 
+
+	time_spent = ((double)(end - start)) / CLOCKS_PER_SEC; 
+
+	printMatrix(matrix, matrix_size); 
+	printf("\n"); 
+	printf("Size of Matrix :%lu \n", matrix_size);
+	printf("Loop Variation Number : %lu\n", variation);
+	printf("%s", checkSum(matrix, matrix_size, variation) == 1? "Decomposition successful... \n":"Decomposition failed...\n"); 
+	printf("computation Time: %f seconds\n", time_spent); 
+
+	free2dmatrix(matrix, matrix_size);
+
+	return 0;	
+
+>>>>>>> 068b4151f4ee69cdc401643903e7f4f1aa39fc9c
 }
