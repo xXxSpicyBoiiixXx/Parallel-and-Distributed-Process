@@ -1,0 +1,19 @@
+# Programming Assignment 2 
+## CS 546 Parallel and Distributed Processing 
+## Md Ali
+
+### Problem 1
+
+#### To compile 
+Simply change to the folder to the sequential_LU and type "make" and the program should compile 
+
+#### Running problem 1
+To run sequential_LU, type "make run" and then follow the on prompts terminal instructions. There are two loops to run.
+
+### Problem 2
+
+### To compile
+Simply change to the folder to the openmp_LU and type "make" and the program should compile 
+
+#### Running exercise 2
+To run openmp_LU type "make run" and the nfollow the on prompts terminal instructions, there are two loops to run as well as you can choose how many threads to run. 
