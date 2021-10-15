@@ -116,14 +116,14 @@ double **getMatrix(long size, long loop) {
 	
 	switch(loop) { 
 	case 1: 
-		initializeLoop1(m, szie); 
+		initializeLoop1(m, size); 
 		break;
 	case 2: 
 		initializeLoop2(m, size);
 		break;
 	default: 
 		printf("Please enter etiher 1 or 2 for the loop variation number.");
-		exit(0_;
+		exit(0);
 	}
 	return 0;
 }
@@ -141,6 +141,18 @@ int checkSum(double **A, long size, long loop) {
 		printf("Invalid loop character in checksum");
 		exit(0);
 	}
+}
+
+double **make2dmatrix(long n) { 
+
+	double **m;
+	m = (double**)malloc(n*sizeof(double*));
+
+	for(long i = 0; i < n; i++) { 
+		m[i] = (double*)malloc(n*sizeof(double)); 
+	}
+
+	return m;
 }
 
 void printMatrix(double **A, long n) {
