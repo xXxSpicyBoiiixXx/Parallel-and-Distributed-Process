@@ -1,11 +1,7 @@
-#include <iostream>
-#include <fstream> 
-#include <vector>  
+#include <iostream> 
 
 using namespace std;
 
-
-// Only use in step 2 and 4 of the PPT decomposition
 void solve(double* a, double* b, double* c, double* d, int n) { 
 	
 	n--; 
@@ -28,38 +24,7 @@ void solve(double* a, double* b, double* c, double* d, int n) {
 }
 
 int main() { 
-	
-	vector<double> a, b, c, d;
- 
-	ifstream inputFileA("a.csv");
-	ifstream inputFileB("b.csv"); 
-	ifstream inputFileC("c.csv");
-	ifstream inputFileD("d.csv"); 
-	
-	if(inputFileA.good() && inputFileB.good() && inputFileC.good() && inputFileD.good()) { 
-		int current_number = 0; 
-		
-		while(inputFileA >> current_number) { 
-			a.push_back(current_number); 
-		} 
 
-	inputFileA.close(); 
-
-	cout << "The numbers are: ";
-	
-	for(int count = 0; count < a.size(); count++) { 
-		cout << numbers[count] << " "; 
-	}
-
-	cout << endl; 
-	} 
-
-	else{ 
-		cout << "ERROR!"; 
-		_exit(0); 
-	}
-
-/*	
 	int  n = 4;
 	double a[4] = { 0, -1, -1, -1 };
 	double b[4] = { 4,  4,  4,  4 };
@@ -71,6 +36,5 @@ int main() {
 		cout << d[i] << endl;
 	}
 	cout << endl << "n= " << n << endl << "n is not changed hooray !!";
-*/
 	return 0;
 }
