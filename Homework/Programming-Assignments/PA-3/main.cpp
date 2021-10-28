@@ -3,6 +3,8 @@
 #include <vector>  
 #include <string>
 #include <sstream> 
+#include <iterator> 
+
 #include "mpi.h" 
 
 using namespace std;
@@ -34,7 +36,7 @@ void solve(double* a, double* b, double* c, double* d, int n) {
 int main() { 
 	
 	vector<double> a, b, c, d;
- 
+ 	
 	ifstream inputFileA("a.csv");
 	ifstream inputFileB("b.csv"); 
 	ifstream inputFileC("c.csv");
@@ -90,7 +92,16 @@ int main() {
 		}
 	}
 
-cout << a.size() << endl << b.size() << endl << c.size() << endl << d.size() << endl;;
+copy(a.begin(), a.end(), ostream_iterator<double>());
+
+double *a_arr = a.data();
+
+solve(a, b, c, d, 4096); 
+
+
+
+// Testing the size of input data below
+//cout << a.size() << endl << b.size() << endl << c.size() << endl << d.size() << endl;;
 	
 	/*if(inputFileA.good() && inputFileB.good() && inputFileC.good() && inputFileD.good()) { 
 		int current_number = 0; 
