@@ -4,8 +4,9 @@
 #include <string>
 #include <sstream> 
 #include <iterator> 
+#include <algorithm> 
 
-#include "mpi.h" 
+//#include "mpi.h" 
 
 using namespace std;
 
@@ -36,6 +37,8 @@ void solve(double* a, double* b, double* c, double* d, int n) {
 int main() { 
 	
 	vector<double> a, b, c, d;
+	
+	int n = 4096; 
  	
 	ifstream inputFileA("a.csv");
 	ifstream inputFileB("b.csv"); 
@@ -92,12 +95,29 @@ int main() {
 		}
 	}
 
-copy(a.begin(), a.end(), ostream_iterator<double>());
+/*
+copy(a.begin(), a.end(), ostream_iterator<double>(cout));
+copy(b.begin(), b.end(), ostream_iterator<double>()); 
+copy(c.begin(), c.end(), ostream_iterator<double>()); 
+copy(d.begin(), d.end(), ostream_iterator<double>()); */
 
-double *a_arr = a.data();
+double a_arr[a.size()];
+double b_arr[b.size()]; 
+double c_arr[c.size()];
+double d_arr[d.size()];
 
-solve(a, b, c, d, 4096); 
+copy(a.begin(), a.end(), a_arr); 
+copy(b.begin(), b.end(), b_arr); 
+copy(c.begin(), c.end(), c_arr); 
+copy(d.begin(), d.end(), d_arr);
 
+solve(a_arr, b_arr, c_arr, d_arr, n); 
+
+
+for(int i = 0; i < n; i++) { 
+	cout << d_arr[i] << endl;
+}
+cout << endl << "n = " << n << endl << "n is not changed!"; 
 
 
 // Testing the size of input data below
