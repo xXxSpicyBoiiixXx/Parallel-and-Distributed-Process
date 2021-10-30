@@ -1,0 +1,13 @@
+# Programming Assignment 3 
+
+### Md Ali 
+
+#### To compile 
+
+Simply type "make" to compile the code, there is only one source file which is main.cpp. 
+
+#### To run 
+
+Type ./main followed by the number of desired processors. For example for 2 processors we would use ./main 2 or for 4 processors, ./main 4 and so forth. 
+
+

@@ -105,12 +105,22 @@ int main(int argc, char* argv[]) {
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &num_of_processes); 
 	MPI_Comm_rank(MPI_COMM_WORLD, &process_num); 
-	 	
+	
+		 	
 	ifstream inputFileA("a.csv");
 	ifstream inputFileB("b.csv"); 
 	ifstream inputFileC("c.csv");
 	ifstream inputFileD("d.csv");
 	
+	
+	/*
+	// For testing cases only
+	n = 4;
+	ifstream inputFileA("a_test1.csv"); 
+	ifstream inputFileB("b_test1.csv");
+	ifstream inputFileC("c_test1.csv");
+	ifstream inputFileD("d_test3.csv"); 
+	*/
 	string line; 
 	if(!inputFileA.good() && !inputFileB.good() && inputFileC.good() && inputFileD.good()) { 
 		cout << "Error opening files" << endl; 
@@ -215,15 +225,13 @@ MPI_Bcast(d_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
 
 if(process_num == 0) { 
-	run_time = MPI_Wtime(); 
 	solve(a_arr, b_arr, c_arr, d_arr, n); 
-	run_time = MPI_Wtime() - run_time; 
+	run_time = MPI_Wtime() + run_time; 
 }
 
 else{ 
-	run_time = MPI_Wtime();
 	solve(a_arr, b_arr, c_arr, d_arr, n); 
-	run_time = MPI_Wtime() - run_time; 
+	run_time = MPI_Wtime() + run_time; 
 }
 
 MPI_Gather(a_arr, n, MPI_DOUBLE, a_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -231,14 +239,30 @@ MPI_Gather(b_arr, n, MPI_DOUBLE, b_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 MPI_Gather(c_arr, n, MPI_DOUBLE, c_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
 MPI_Gather(d_arr, n, MPI_DOUBLE, d_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
 
+ofstream fileAout;
+ofstream fileBout;
+ofstream fileCout;
+ofstream fileDout; 
+
+fileAout.open("a_ans.csv");
+fileBout.open("b_ans.csv");
+fileCout.open("c_ans.csv");
+fileDout.open("d_ans.csv");
+
 //solve(a_arr, b_arr, c_arr, d_arr, n); 
 for(int i = 0; i < n; i++) {
-	cout << d_arr[i] << endl;
+	fileAout << a_arr[i] << endl;
+	fileBout << b_arr[i] << endl;
+	fileCout << c_arr[i] << endl;
+	fileDout << d_arr[i] << endl;;
 }
 
+fileAout.close();
+fileBout.close();
+fileCout.close();
+fileDout.close();
 
-
-
+cout << "Total run time: " << run_time << endl;
 
 MPI_Finalize();
 
