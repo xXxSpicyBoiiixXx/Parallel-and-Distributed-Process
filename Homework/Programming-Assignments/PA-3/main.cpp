@@ -18,6 +18,7 @@ using namespace std;
 
 typedef vector<string> LINE; 
 
+/*
 void transpose_matrix(float *matrix, float transposed_matrix, int size) { 
 	
 	for(int i = 0; i < size; i++) {
@@ -36,40 +37,14 @@ void zero_filling(double* matrix, int size) {
 	}
 }
 
-void parallel_solve(double* a, double* b, double* c, double* d, int size, int process_num, int num_of_processes) {
-	
-	int rows_per_thread = size / num_of_processes; 
-	
-	// Being able to send each of these smaller matrixes to others 
-	double* A_matrix = new double[size * size]; 
-	double lower = new double[size * size]; 
-	double upper = new double[size * size]; 
-
-	double lower_calc = new double[size * rows_per_thread];
-	double upper_calc = new double[size * rows_per_thread];
-
-	double upper_transposed = new double[size * size]; 
-
-	if(process_num == 0) {
-		
-		A_matrix = a; 
-		zero_filling(upper_transposed, size); 
-	}
-
-	zero_filling(lower, size);
-	zero_filling(upper, size); 
-
-	MPI_Bcast(A_matrix, size * size, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
-
-	
 	
 }
 
-
+*/
 // The wiki example cpp code is below.
 
 // Only use in step 2 and 4 of the PPT decomposition, this will also broadcast to certain nodes
-/*void solve(double* a, double* b, double* c, double* d, int n) { 
+void solve(double* a, double* b, double* c, double* d, int n) { 
 	
 	n--; 
 	
@@ -88,14 +63,49 @@ void parallel_solve(double* a, double* b, double* c, double* d, int size, int pr
 		d[i] -= c[i] * d[i+1]; 
 	} 
 	
+}
+/*
+void solve(double *a, double *b, double *c, double *d, int n, int process_num, int num_of_processes) {
+	
+	n--;
+	
+	int rows_per_thread = n/num_of_processes; 
+
+	double* A_matrix = new double[n*n];
+	double* lower = new double[n*n];
+	
+
+
+	c[0] /= b[0];
+	d[0] /= b[0];
+	
+	for(int i = 1; i < n; i++) { 
+		
+		c[i] /= b[i] - a[i] * c[i-1]; 
+		d[i] = (d[i] - a[i] * d[i-1]) / (b[i] - a[i] * c[i-1]); 
+	}
+
+	d[n] = (d[n] - a[n] * d[n-1]) / (b[n] - a[n] * c[n-1]);
+	
+	for(int i = n; i-- > 0;) { 
+		d[i] -= c[i] * d[i + 1];
+	}
 }*/
 
-int main() { 
+int main(int argc, char* argv[]) { 
 	
 	vector<double> a, b, c, d;
 	
 	int n = 4096; 
  	
+	int num_of_processes = atoi(argv[1]);
+	int process_num;	
+	double run_time; 
+	
+	MPI_Init(&argc, &argv);
+	MPI_Comm_size(MPI_COMM_WORLD, &num_of_processes); 
+	MPI_Comm_rank(MPI_COMM_WORLD, &process_num); 
+	 	
 	ifstream inputFileA("a.csv");
 	ifstream inputFileB("b.csv"); 
 	ifstream inputFileC("c.csv");
@@ -166,14 +176,60 @@ copy(a.begin(), a.end(), a_arr);
 copy(b.begin(), b.end(), b_arr); 
 copy(c.begin(), c.end(), c_arr); 
 copy(d.begin(), d.end(), d_arr);
+/* segmentation faults 
+MPI_Bcast(a_arr, n*n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+MPI_Bcast(d_arr, n*n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
 
 solve(a_arr, b_arr, c_arr, d_arr, n); 
 
+MPI_Gather(a_arr, n, MPI_DOUBLE, d_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+*/
 
-for(int i = 0; i < n; i++) { 
-	cout << d_arr[i] << endl;
+MPI_Bcast(a_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+MPI_Bcast(b_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+MPI_Bcast(c_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+MPI_Bcast(d_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+
+
+if(process_num == 0) { 
+	run_time = MPI_Wtime(); 
+	solve(a_arr, b_arr, c_arr, d_arr, n); 
+	run_time = MPI_Wtime() - run_time; 
 }
-cout << endl << "n = " << n << endl << "n is not changed!"; 
+
+else{ 
+	run_time = MPI_Wtime();
+	solve(a_arr, b_arr, c_arr, d_arr, n); 
+	run_time = MPI_Wtime() - run_time; 
+}
+
+MPI_Gather(a_arr, n, MPI_DOUBLE, a_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+MPI_Gather(b_arr, n, MPI_DOUBLE, b_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+MPI_Gather(c_arr, n, MPI_DOUBLE, c_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+MPI_Gather(d_arr, n, MPI_DOUBLE, d_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+
+//solve(a_arr, b_arr, c_arr, d_arr, n); 
+/*
+for(int i = 0; i < n; i++) {
+	cout << d_arr[i] << endl;
+}*/
+
+
+
+
+
+MPI_Finalize();
+
+
+
+
+/*
+solve(a_arr, b_arr, c_arr, d_arr, n);  
+	cout << d_arr[1] << endl;
+
+solve(a_arr, b_arr, c_arr, d_arr, n); 
+	cout << d_arr[1] << endl;
+*/
 
 
 // Testing the size of input data below
