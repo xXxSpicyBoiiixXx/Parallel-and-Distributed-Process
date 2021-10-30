@@ -1,19 +1,75 @@
 #include <iostream>
+#include <iomanip> 
+#include <cmath>
 #include <fstream> 
 #include <vector>  
 #include <string>
 #include <sstream> 
 #include <iterator> 
-#include <algorithm> 
+#include <algorithm>
 
-//#include "mpi.h" 
+#include <stdio.h>
+#include <stdlib.h>  
+#include <mpi.h> 
+
+//#include "mpi.h" <--- C implementation/
 
 using namespace std;
 
 typedef vector<string> LINE; 
 
-// Only use in step 2 and 4 of the PPT decomposition
-void solve(double* a, double* b, double* c, double* d, int n) { 
+void transpose_matrix(float *matrix, float transposed_matrix, int size) { 
+	
+	for(int i = 0; i < size; i++) {
+		for(int j = 0; j < size; j++) {
+			transposed_matrix[i * size + j] = matrix[j * size + i]; 
+		}
+	}
+}
+
+void zero_filling(double* matrix, int size) {
+	
+	for(int i = 0; i < size; i++) { 
+		for(int j = 0; j < size; j++) {
+			matrix[i * size + j] = 0; 
+		}
+	}
+}
+
+void parallel_solve(double* a, double* b, double* c, double* d, int size, int process_num, int num_of_processes) {
+	
+	int rows_per_thread = size / num_of_processes; 
+	
+	// Being able to send each of these smaller matrixes to others 
+	double* A_matrix = new double[size * size]; 
+	double lower = new double[size * size]; 
+	double upper = new double[size * size]; 
+
+	double lower_calc = new double[size * rows_per_thread];
+	double upper_calc = new double[size * rows_per_thread];
+
+	double upper_transposed = new double[size * size]; 
+
+	if(process_num == 0) {
+		
+		A_matrix = a; 
+		zero_filling(upper_transposed, size); 
+	}
+
+	zero_filling(lower, size);
+	zero_filling(upper, size); 
+
+	MPI_Bcast(A_matrix, size * size, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+
+	
+	
+}
+
+
+// The wiki example cpp code is below.
+
+// Only use in step 2 and 4 of the PPT decomposition, this will also broadcast to certain nodes
+/*void solve(double* a, double* b, double* c, double* d, int n) { 
 	
 	n--; 
 	
@@ -32,7 +88,7 @@ void solve(double* a, double* b, double* c, double* d, int n) {
 		d[i] -= c[i] * d[i+1]; 
 	} 
 	
-}
+}*/
 
 int main() { 
 	
