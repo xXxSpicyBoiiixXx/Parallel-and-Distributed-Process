@@ -207,12 +207,34 @@ MPI_Gather(a_arr, n, MPI_DOUBLE, a_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 MPI_Gather(b_arr, n, MPI_DOUBLE, b_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
 MPI_Gather(c_arr, n, MPI_DOUBLE, c_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
 MPI_Gather(d_arr, n, MPI_DOUBLE, d_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+	
+MPI_Bcast(a_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+MPI_Bcast(b_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+MPI_Bcast(c_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+MPI_Bcast(d_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+
+
+if(process_num == 0) { 
+	run_time = MPI_Wtime(); 
+	solve(a_arr, b_arr, c_arr, d_arr, n); 
+	run_time = MPI_Wtime() - run_time; 
+}
+
+else{ 
+	run_time = MPI_Wtime();
+	solve(a_arr, b_arr, c_arr, d_arr, n); 
+	run_time = MPI_Wtime() - run_time; 
+}
+
+MPI_Gather(a_arr, n, MPI_DOUBLE, a_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+MPI_Gather(b_arr, n, MPI_DOUBLE, b_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+MPI_Gather(c_arr, n, MPI_DOUBLE, c_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+MPI_Gather(d_arr, n, MPI_DOUBLE, d_arr, n, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
 
 //solve(a_arr, b_arr, c_arr, d_arr, n); 
-/*
 for(int i = 0; i < n; i++) {
 	cout << d_arr[i] << endl;
-}*/
+}
 
 
 
