@@ -1,7 +1,7 @@
 # MPI programs
-#CC = mpicc 
+CC = mpic++
 
-CC = g++
+#CC = g++
 
 # flags
 CFLAGS = -g -Wall -lm -O3 
