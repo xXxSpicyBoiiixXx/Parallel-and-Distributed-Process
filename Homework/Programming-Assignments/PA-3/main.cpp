@@ -98,11 +98,17 @@ int main(int argc, char* argv[]) {
 	
 	int n = 4096; 
  	
-	int num_of_processes = atoi(argv[1]);
-	int process_num;	
+//	int num_of_processes = atoi(argv[1]);
+	int process_num, num_of_processes;	
 	double run_time; 
 	
 	MPI_Init(&argc, &argv);
+
+//	MPI::Comm & comm = comm.Get_size();
+	
+//	int comm_sz = comm.Get_size();
+//	int my_rank = comm.Get_rank(); 
+
 	MPI_Comm_size(MPI_COMM_WORLD, &num_of_processes); 
 	MPI_Comm_rank(MPI_COMM_WORLD, &process_num); 
 	
